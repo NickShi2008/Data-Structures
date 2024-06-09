@@ -1,4 +1,6 @@
-﻿namespace LinkedArrayShoppingList
+﻿using System.Text.Encodings.Web;
+
+namespace LinkedArrayShoppingList
 {
     public class Program
     {
@@ -6,145 +8,176 @@
 
         static void Main(string[] args)
         {
-            LinkedList<Item> shoppingList = new LinkedList<Item>();
-            String userInput = "no";
 
+            LinkedList<int> array = new LinkedList<int>();
+            array.AddFirst(9);
+            array.AddLast(1);
+            array.AddBefore(array.Tail, 2);
+            array.AddBefore(array.Tail, 3);
+            array.AddAfter(array.Head, 8);
+            array.AddAfter(array.Head, 7);
+            array.AddAfter(array.Head, 6);
+            array.AddBefore(array.Tail, 5);
+            array.AddBefore(array.Tail, 4);
+
+            LinkedList<int> sortedArray = new LinkedList<int>();
+            sortedArray.AddFirst(9);
+            sortedArray.AddFirst(8);
+            sortedArray.AddFirst(7);
+            sortedArray.AddFirst(6);
+
+           BubbleSort(array);
+           // BubbleSort(sortedArray);
+
+
+                    Node<int> another = array.Head;
+                    while (another != null)
+                    {
+                        Console.WriteLine(another.Value);
+                             another = another.Next;
+                    }
+              
 
         }
 
-        class LinkedList<T>
+        public static void BubbleSort<T>(LinkedList<T> array) 
+            where T : IComparable
         {
-            public Node<T> head;
-            public Node<T> Head
-            {
-                get
-                {
-                    return head;
-                }
+            bool isSorted = false;
+            int counter = 0;
 
-                set
+            while(!isSorted)
+            { 
+                isSorted = true;
+                for (Node<T> current = array.Head;  current.Next != null; current = current.Next)
                 {
-                    head = value;
+                    if (current.Value.CompareTo(current.Next.Value) > 0)
+                    {
+                        isSorted = false;
+                        Node<T> temp = new Node<T>(current.Value);
+                        current.Value = current.Next.Value;
+                        current.Next.Value = temp.Value;
+
+                    }
+                    
+
                 }
+                counter++;
             }
-            public Node<T> tail;
-            public Node<T> Tail
-            {
-                get
-                {
-                    return tail;
-                }
+            Console.WriteLine(counter);
 
-                set
-                {
-                    tail = value;
-                }
-            }
+        }
 
-            public int count;
-            public int Count
+        public class LinkedList<T>
+        {
+            public Node<T> Head { get; private set; }
+
+            public Node<T> Tail { get; private set; }
+
+            public int Count { get; private set; }
+
+            public LinkedList()
             {
-                get
-                {
-                    return count;
-                }
-                set
-                {
-                    count = value;
-                }
+                Head = null;
+                Tail = null;
+                Count = 0;
             }
 
             public void AddFirst(T value)
             {
-                Node<T> temp = new Node<T>(value);
-                if (head != null)
+                if (Head == null)
                 {
-                    temp.Next = head;
+                    Head = new Node<T>(value);
+                    Tail = Head;
                 }
-                head = temp;
-                count++;
+                else
+                {
+                    Node<T> temp = new Node<T>(value,Head);
+                    Head = temp;
+                }
+                Count++;
 
             }
 
             public void AddLast(T value)
             {
                 Node<T> temp = new Node<T>(value);
-                if (head == null)
+                if (Head == null)
                 {
-                    head = temp;
-                    tail = head;
+                    Head = temp;
+                    Tail = Head;
                 }
                 else
                 {
-                    tail.Next = temp;
-                    tail = tail.Next;
+                    Tail.Next = temp;
+                    Tail = Tail.Next;
                 }
-                count++;
+                Count++;
             }
-
-
-            //Ask about the github
+           
             public void AddBefore(Node<T> node, T value)
             {
-                Node<T> current = head;
-                while (current != node)
+                Node<T> current = Head;
+                while (current.Next != node)
                 {
                     current = current.Next;
                 }
 
-                Node<T> temp = new Node<T>(value, node);
+                Node<T> temp = new Node<T>(value);
+                temp.Next = node;
                 current.Next = temp;
+                Count++;
             }
 
             public void AddAfter(Node<T> node, T value)
             {
-                Node<T> current = head;
+                Node<T> current = Head;
                 while (current != node)
                 {
                     current = current.Next;
                 }
                 Node<T> temp = new Node<T>(value, current.Next);
                 current.Next = temp;
-                count++;
+                Count++;
             }
 
             public bool RemoveFirst()
             {
-                if (count == 0)
+                if (Count == 0)
                 {
                     return false;
                 }
-                head = head.Next;
-                count--;
+                Head = Head.Next;
+                Count--;
                 return true;
             }
 
             public bool RemoveLast()
             {
-                if (count == 0)
+                if (Count == 0)
                 {
                     return false;
                 }
-                Node<T> current = head;
-                while (current != tail)
+                Node<T> current = Head;
+                while (current.Next != Tail)
                 {
                     current = current.Next;
                 }
                 current.Next = null;
-                tail = current;
-                count--;
+                Tail = current;
+                Count--;
                 return true;
             }
 
             public bool Remove(T value)
             {
-                Node<T> current = head;
+                Node<T> current = Head;
                 while (current != null)
                 {
                     if (current.Value.Equals(value))
                     {
-                        Node<T> temp = head;
-                        while (temp != current)
+                        Node<T> temp = Head;
+                        while (temp.Next != current)
                         {
                             temp = temp.Next;
                         }
@@ -159,14 +192,14 @@
 
             public void Clear()
             {
-                head = null;
-                tail = null;
-                count = 0;
+                Head = null;
+                Tail = null;
+                Count = 0;
             }
 
             public bool Contains(T value)
             {
-                Node<T> current = head;
+                Node<T> current = Head;
                 while (current != null)
                 {
                     if (current.Value.Equals(value))
@@ -179,7 +212,7 @@
 
             public Node<T> Search(T value)
             {
-                Node<T> current = head;
+                Node<T> current = Head;
                 while (current != null)
                 {
                     if (current.Value.Equals(value))
@@ -194,7 +227,7 @@
         }
 
 
-        class Node<T>
+        public class Node<T>
         {
             public T value;
             public T Value
