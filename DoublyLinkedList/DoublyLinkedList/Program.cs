@@ -87,7 +87,8 @@ namespace DoublyLinkedList
                 temp.Next = Head;
                 Head = temp;
             }
-            
+            Count++;
+
         }
 
         public void AddLast(T value)
@@ -97,6 +98,7 @@ namespace DoublyLinkedList
             {
                 Head = temp;
                 Tail = Head;
+                Count++;
                 return;
                 
             }
@@ -104,7 +106,7 @@ namespace DoublyLinkedList
             last.Next = temp;
             temp.Previous = last;
             Tail = temp;
-            
+            Count++;
         }
 
         public void AddBefore(Node node, T value)
@@ -116,6 +118,7 @@ namespace DoublyLinkedList
                 temp.Next = Head;
                 Head.Previous = temp;
                 Head = temp;
+                Count++;
                 return;
             }
 
@@ -137,6 +140,8 @@ namespace DoublyLinkedList
                 }
                 current.Previous = temp;
             }
+
+            Count++;
         }
 
         public void AddAfter(Node node, T value)
@@ -153,6 +158,7 @@ namespace DoublyLinkedList
                 temp.Previous = Tail;
                 Tail.Next = temp;
                 Tail = temp;
+                Count++;
                 return;
             }
             if (current != null && current.Value.Equals(node.Value))
@@ -167,6 +173,7 @@ namespace DoublyLinkedList
                 current.Next = temp;
 
             }
+            Count++;
         }
 
         public bool RemoveFirst()
@@ -175,10 +182,12 @@ namespace DoublyLinkedList
             else if(Head.Next == null)
             {
                 Head = null;
+                Count--;
                 return true;
             }
             Head = Head.Next;
             Head.Previous = null;
+            Count--;
             return true;
 
         }
@@ -189,10 +198,12 @@ namespace DoublyLinkedList
             else if(Tail.Previous == null)
             {
                 Tail = null;
+                Count--;
                 return true;
             }
             Tail = Tail.Previous;
             Tail.Next = null;
+            Count--;
             return true;
         }
 
@@ -203,6 +214,7 @@ namespace DoublyLinkedList
             if(value.Equals( Head.Value))
             {
                 Head = Head.Next;
+                Count--;
                 return true;
             }
             while(current != null && !current.Value.Equals(value))
@@ -214,6 +226,7 @@ namespace DoublyLinkedList
             {
                 Tail = Tail.Previous;
                 Tail.Next = null;
+                Count--;
                 return true;
             }
 
@@ -222,8 +235,10 @@ namespace DoublyLinkedList
                 current.Previous = current.Next;
                 current.Next = current.Previous;
                 current = null;
+                Count--;
                 return true;
             }
+            Count--;
             return false;
         }
 
