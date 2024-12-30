@@ -12,7 +12,7 @@
             skip.Insert(1);
             skip.Insert(2);
             skip.Insert(4);
-
+            skip.Remove(3);
             ;
         }
     }

@@ -35,7 +35,6 @@ namespace SkipList
         }
 
         private Node? Head;
-        public int Count { get; private set; }
 
         public SkipList()
         {
@@ -69,9 +68,9 @@ namespace SkipList
             Node current = Head;
             Node node = new Node(value, HeightGen());
             int height = current.Next.Count - 1;
-            while (height > 0 && (current.Value.CompareTo(value) < 0 || current.Next[height] != null))
+            while (height >= 0 && (current.Value.CompareTo(value) < 0 || current.Next[height] != null))
             {
-                if (current.Value.CompareTo(value) < 0 && (current.Next[height] == null || current.Next[height].Value.CompareTo(value) > 0))
+                if (current.Next[height] == null || current.Next[height].Value.CompareTo(value) > 0)
                 {
                     if (node.Next.Count - 1 >= height)
                     {
@@ -84,35 +83,40 @@ namespace SkipList
                 {
                     current = current.Next[height];
                 }
-                
             }
-            node.Next[height] = current.Next[height];
-            current.Next[height] = node;
         }
 
         public void Remove(T value)
         {
             Node current = Head;
             int height = current.Next.Count - 1;
-            while (height > 0)
-            {
-                if (current.Value.CompareTo(value) < 0 && (current.Next[height] == null || current.Next[height].Value.CompareTo(value) > 0))
-                {
-                   
-                }
-                else if (current.Value.Equals(value))
-                {
-                    while()
-                    {
+            Node[] deletes = new Node[height + 1];
 
-                    }
-                }
-                else
+            for (int i = height; i >= 0; i--)
+            {
+                while(current.Next[i] != null && current.Value.CompareTo(value) < 0)
                 {
-                    current = current.Next[height];
+                   current = current.Next[i];
+                   deletes[i] = current;
                 }
+                current = Head;
             }
-            throw new ArgumentException("Can not remove value that does not exist");
+
+            for (int i = height; i >= 0; i--)
+            {
+                while (current.Next[i].Value.CompareTo(value) < 0)
+                {
+                    current = current.Next[i];
+                    if (current.Next[i] == null)
+                    { break; }
+                }
+                if (deletes[i].Value.Equals(value))
+                {
+                    current.Next[i] = deletes[i].Next[i];
+                }
+                current = Head;
+            }
+            
         }
 
 

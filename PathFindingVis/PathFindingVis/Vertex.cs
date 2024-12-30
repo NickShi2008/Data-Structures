@@ -1,0 +1,41 @@
+﻿using Microsoft.Xna.Framework.Graphics;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace PathFindingVis
+{
+    
+    public class Vertex<T> 
+    {
+        public T Value { get; set; }
+        public List<Edge<T>> Neighbors { get; set; }
+        
+        public int NeighborCount => Neighbors.Count;
+
+        public Vertex(T value)
+        {
+            Value = value;
+            Neighbors = new List<Edge<T>>();
+        }
+
+        public bool HasEdge(Vertex<T> a)
+        {
+            
+            return Neighbors.Where(x => x.EndingPoint.Equals(a)).Count() > 0;
+        }
+
+        public Edge<T> FindFirstEdge(Vertex<T> a)
+        {
+            if (a.Equals(this))
+            {
+                return new Edge<T>(a, a, 0);
+            }
+            return Neighbors.Where(x => x.EndingPoint.Equals(a)).First();
+        }
+
+      
+    }
+}
