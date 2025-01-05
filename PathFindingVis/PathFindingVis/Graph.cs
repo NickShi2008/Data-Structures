@@ -8,7 +8,7 @@ namespace PathFindingVis
 {
     public class Graph<T> 
     {
-
+        private Grid<T> GridVis { get; set; }
         public List<Vertex<T>> Vertices { get; set; }
         public List<Edge<T>> Edges { get; set; }
 
@@ -18,93 +18,13 @@ namespace PathFindingVis
         
         public Graph()
         {
-            Vertices = new List<Vertex<T>>();
 
+            Vertices = new List<Vertex<T>>();
+            
             Edges = new List<Edge<T>>();
         }
 
-        public void AddVertex(Vertex<T> vertex)
-        {
-            if (!SearchVertex(vertex) && vertex.NeighborCount == 0)
-            {
-                Vertices.Add(vertex);
-            }
-        }
-
-        public bool RemoveVertex(Vertex<T> vertex)
-        {
-            if (Vertices.Contains(vertex))
-            {
-                foreach (Edge<T> edges in vertex.Neighbors)
-                {
-                    edges.EndingPoint.Neighbors.Remove(edges.EndingPoint.FindFirstEdge(vertex));
-                    vertex.Neighbors.Remove(vertex.FindFirstEdge(edges.EndingPoint));
-                }
-                Vertices.Remove(vertex);
-                return true;
-            }
-            return false;
-        }
-
-        private bool SearchVertex(Vertex<T> vertex)
-        {
-            bool check = Vertices.Contains(vertex);
-            return vertex != null && Vertices.Contains(vertex);
-        }
-
-        public bool AddEdge(Vertex<T> a, Vertex<T> b, float distance)
-        {
-            if (SearchVertex(a) && SearchVertex(b))
-            {
-                Edge<T> AConnector = new Edge<T>(a, b, distance);
-                Edges.Add(AConnector);
-                if (!a.Neighbors.Contains(AConnector))
-                    a.Neighbors.Add(AConnector);
-
-                return true;
-            }
-            return false;
-        }
-
-        public bool RemoveEdge(Vertex<T> a, Vertex<T> b)
-        {
-            if (SearchVertex(a) && SearchVertex(b) && a.HasEdge(b) && b.HasEdge(a))
-            {
-                a.Neighbors.Remove(a.FindFirstEdge(b));
-                b.Neighbors.Remove(b.FindFirstEdge(a));
-                return true;
-            }
-            return false;
-        }
-
-        public Vertex<T> Search(T vertex)
-        {
-            int count = -1;
-            for (int i = 0; i < Vertices.Count; i++)
-            {
-                if (Vertices[i].Value.Equals(vertex))
-                {
-                    count = i;
-                    break;
-                }
-            }
-
-            if (count == -1)
-            {
-                return null;
-            }
-            return Vertices[count];
-        }
-
-        public Edge<T> GetEdge(Vertex<T> a, Vertex<T> b)
-        {
-            if (a != null && b != null && a.HasEdge(b) && b.HasEdge(a))
-            {
-                return a.FindFirstEdge(b);
-            }
-            return null;
-        }
-
+        
         public List<Vertex<T>> Dijkstra(Vertex<T> start, Vertex<T> end)
         {
             //Init
@@ -140,7 +60,7 @@ namespace PathFindingVis
                     {
                         totalDistances[edge.EndingPoint] = totalDistances[currentVertex] + edge.Distance;
 
-
+                        
                         queuedDistances.Enqueue(edge.EndingPoint, totalDistances[edge.EndingPoint]);
 
                     }
@@ -153,7 +73,7 @@ namespace PathFindingVis
             return FindPath(start, end, totalDistances);
         }
 
-        public List<Vertex<T>> ASTAR(Vertex<T> start, Vertex<T> end)
+        public List<Vertex<T>> ASTAR(Vertex<T> start, Vertex<T> end, Func<float> heuristic)
         {
             Dictionary<Vertex<T>, float> totalDistances = new Dictionary<Vertex<T>, float>();
             List<Vertex<T>> visitedVertices = new List<Vertex<T>>();
@@ -176,10 +96,11 @@ namespace PathFindingVis
                     continue;
 
                 visitedVertices.Add(vertex);
+                GridVis.ChangeToSearched(vertex);
 
                 foreach (var neigh in vertex.Neighbors)
                 {
-
+                    GridVis.ChangeToNeigh(neigh);
                     if (totalDistances[vertex] + neigh.Distance < totalDistances[neigh.EndingPoint])
                     {
                         totalDistances[neigh.EndingPoint] = totalDistances[vertex] + neigh.Distance;
@@ -267,6 +188,91 @@ namespace PathFindingVis
 
             return path;
         }
+
+        
+
+        public void AddVertex(Vertex<T> vertex)
+        {
+            if (!SearchVertex(vertex) && vertex.NeighborCount == 0)
+            {
+                Vertices.Add(vertex);
+            }
+        }
+
+        public bool RemoveVertex(Vertex<T> vertex)
+        {
+            if (Vertices.Contains(vertex))
+            {
+                foreach (Edge<T> edges in vertex.Neighbors)
+                {
+                    edges.EndingPoint.Neighbors.Remove(edges.EndingPoint.FindFirstEdge(vertex));
+                    vertex.Neighbors.Remove(vertex.FindFirstEdge(edges.EndingPoint));
+                }
+                Vertices.Remove(vertex);
+                return true;
+            }
+            return false;
+        }
+
+        private bool SearchVertex(Vertex<T> vertex)
+        {
+            bool check = Vertices.Contains(vertex);
+            return vertex != null && Vertices.Contains(vertex);
+        }
+
+        public bool AddEdge(Vertex<T> a, Vertex<T> b, float distance)
+        {
+            if (SearchVertex(a) && SearchVertex(b))
+            {
+                Edge<T> AConnector = new Edge<T>(a, b, distance);
+                Edges.Add(AConnector);
+                if (!a.Neighbors.Contains(AConnector))
+                    a.Neighbors.Add(AConnector);
+
+                return true;
+            }
+            return false;
+        }
+
+        public bool RemoveEdge(Vertex<T> a, Vertex<T> b)
+        {
+            if (SearchVertex(a) && SearchVertex(b) && a.HasEdge(b) && b.HasEdge(a))
+            {
+                a.Neighbors.Remove(a.FindFirstEdge(b));
+                b.Neighbors.Remove(b.FindFirstEdge(a));
+                return true;
+            }
+            return false;
+        }
+
+        public Vertex<T> Search(T vertex)
+        {
+            int count = -1;
+            for (int i = 0; i < Vertices.Count; i++)
+            {
+                if (Vertices[i].Value.Equals(vertex))
+                {
+                    count = i;
+                    break;
+                }
+            }
+
+            if (count == -1)
+            {
+                return null;
+            }
+            return Vertices[count];
+        }
+
+        public Edge<T> GetEdge(Vertex<T> a, Vertex<T> b)
+        {
+            if (a != null && b != null && a.HasEdge(b) && b.HasEdge(a))
+            {
+                return a.FindFirstEdge(b);
+            }
+            return null;
+        }
+
 
     }
 }

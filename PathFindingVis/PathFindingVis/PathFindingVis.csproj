@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows7.0</TargetFramework>
@@ -11,6 +11,9 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Icon.ico</ApplicationIcon>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Content\FileName.cs" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="MonoGame.Extended" Version="4.0.3" />
     <PackageReference Include="MonoGame.Framework.WindowsDX" Version="3.8.2.1105" />
