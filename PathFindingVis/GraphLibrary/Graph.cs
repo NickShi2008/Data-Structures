@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PathFindingVis
+namespace GraphLibrary
 {
     public class Graph<T> 
     {
-        private Grid<T> GridVis { get; set; }
+        //private Grid<T> GridVis { get; set; }
         public List<Vertex<T>> Vertices { get; set; }
         public List<Edge<T>> Edges { get; set; }
 
@@ -25,13 +26,13 @@ namespace PathFindingVis
         }
 
         
-        public List<Vertex<T>> Dijkstra(Vertex<T> start, Vertex<T> end)
+        public (List<Vertex<T>>, float cost) Dijkstra(Vertex<T> start, Vertex<T> end)
         {
             //Init
             Dictionary<Vertex<T>, float> totalDistances = new Dictionary<Vertex<T>, float>();
             List<Vertex<T>> visitedVertices = new List<Vertex<T>>();
             PriorityQueue<Vertex<T>, float> queuedDistances = new PriorityQueue<Vertex<T>, float>();
-
+            Dictionary<Vertex<T>, (Vertex<T> founder, float cost)> map = [];
             //set each vertex as Unknown
             foreach (var v in Vertices)
             {
@@ -59,8 +60,8 @@ namespace PathFindingVis
                         < totalDistances[edge.EndingPoint])
                     {
                         totalDistances[edge.EndingPoint] = totalDistances[currentVertex] + edge.Distance;
+                        map[edge.EndingPoint] = (edge.StartingPoint, edge.Distance);
 
-                        
                         queuedDistances.Enqueue(edge.EndingPoint, totalDistances[edge.EndingPoint]);
 
                     }
@@ -70,15 +71,15 @@ namespace PathFindingVis
             }
             //traces backwards to the beginning
 
-            return FindPath(start, end, totalDistances);
+            return FindPath(start, end, map);
         }
 
-        public List<Vertex<T>> ASTAR(Vertex<T> start, Vertex<T> end, Func<float> heuristic)
+        public (List<Vertex<T>>, float cost) ASTAR(Vertex<T> start, Vertex<T> end, Func<Vertex<T>, Vertex<T>, float> heuristic)
         {
             Dictionary<Vertex<T>, float> totalDistances = new Dictionary<Vertex<T>, float>();
             List<Vertex<T>> visitedVertices = new List<Vertex<T>>();
             PriorityQueue<Vertex<T>, float> queuedDistances = new PriorityQueue<Vertex<T>, float>();
-
+            Dictionary<Vertex<T>, (Vertex<T> founder, float cost)> map = [];
             foreach (var v in Vertices)
             {
                 totalDistances.Add(v, float.PositiveInfinity);
@@ -96,67 +97,65 @@ namespace PathFindingVis
                     continue;
 
                 visitedVertices.Add(vertex);
-                GridVis.ChangeToSearched(vertex);
-
+                
                 foreach (var neigh in vertex.Neighbors)
                 {
-                    GridVis.ChangeToNeigh(neigh);
-                    if (totalDistances[vertex] + neigh.Distance < totalDistances[neigh.EndingPoint])
-                    {
-                        totalDistances[neigh.EndingPoint] = totalDistances[vertex] + neigh.Distance;
+                    float finalDistance = heuristic(neigh.EndingPoint, end);
 
-                        RearrangeQueue(queuedDistances, totalDistances[vertex] + neigh.Distance, neigh.EndingPoint);
+                    if (finalDistance < totalDistances[neigh.EndingPoint])
+                    {
+                        totalDistances[neigh.EndingPoint] = finalDistance;
+                        map[neigh.EndingPoint] = (neigh.StartingPoint, neigh.Distance); 
+                        queuedDistances.Enqueue(neigh.EndingPoint, finalDistance);
                     }
                 }
 
             }
 
-            return FindPath(start, end, totalDistances);
+            return FindPath(start, end, map);
         }
 
-        public void RearrangeQueue(PriorityQueue<Vertex<T>, float> queue, float originalDistance, Vertex<T> comparison)
-        {
-            PriorityQueue<Vertex<T>, float> placeHolder = queue;
-            bool hasBeenFound = false;
-            bool hasBeenReplaced = false;
+        /*  public void RearrangeQueue(PriorityQueue<Vertex<T>, float> queue, float originalDistance, Vertex<T> comparison)
+          {
+              PriorityQueue<Vertex<T>, float> placeHolder = new PriorityQueue<Vertex<T>, float>();
+              bool hasBeenFound = false;
 
-            while (queue.Count > 0)
-            {
-                queue.TryDequeue(out var currentVertex, out float currentDistance);
+              while (queue.Count > 0)
+              {
+                  queue.TryDequeue(out var currentVertex, out float currentDistance);
 
-                if (currentVertex.Equals(comparison))
-                {
-                    hasBeenFound = true;
-                    if (originalDistance < currentDistance)
-                    {
-                        placeHolder.Enqueue(comparison, originalDistance);
-                        hasBeenReplaced = true;
-                    }
-                    else
-                    {
-                        placeHolder.Enqueue(currentVertex, currentDistance);
-                    }
-                }
-                else
-                {
-                    placeHolder.Enqueue(currentVertex, currentDistance);
-                }
-            }
+                  if (currentVertex.Equals(comparison))
+                  {
+                      hasBeenFound = true;
+                      if (originalDistance < currentDistance)
+                      {
+                          placeHolder.Enqueue(comparison, originalDistance);
+                      }
+                      else
+                      {
+                          placeHolder.Enqueue(currentVertex, currentDistance);
+                      }
+                  }
+                  else
+                  {
+                      placeHolder.Enqueue(currentVertex, currentDistance);
+                  }
+              }
 
-            if (!hasBeenFound)
-            {
-                placeHolder.Enqueue(comparison, originalDistance);
-            }
+              if (!hasBeenFound)
+              {
+                  placeHolder.Enqueue(comparison, originalDistance);
+              }
 
-            while (placeHolder.Count > 0)
-            {
-                placeHolder.TryDequeue(out var tempNode, out var tempPriority);
+              while (placeHolder.Count > 0)
+              {
+                  placeHolder.TryDequeue(out var tempNode, out var tempPriority);
 
-                queue.Enqueue(tempNode, tempPriority);
-            }
-        }
+                  queue.Enqueue(tempNode, tempPriority);
+              }
+          }*/
 
-        public List<Vertex<T>> FindPath(Vertex<T> start, Vertex<T> end, Dictionary<Vertex<T>, float> totalDistances)
+        /*public List<Vertex<T>> FindPath(Vertex<T> start, Vertex<T> end, Dictionary<Vertex<T>, float> totalDistances)
         {
             Stack<Vertex<T>> reversePath = new Stack<Vertex<T>>();
             Vertex<T> lastVertex = end;
@@ -187,8 +186,22 @@ namespace PathFindingVis
             }
 
             return path;
-        }
+        }*/
 
+        public (List<Vertex<T>> path, float cost) FindPath(Vertex<T> start, Vertex<T> end, Dictionary<Vertex<T>, (Vertex<T> founder, float cost)> founderMap)
+        {
+            Stack<Vertex<T>> reversePath = new Stack<Vertex<T>>();
+            var curr = end;
+            float cost = 0;
+            while (founderMap.ContainsKey(curr))
+            {
+                reversePath.Push(curr);
+                cost += founderMap[curr].cost;
+                curr = founderMap[curr].founder;
+            }
+
+            return (reversePath.ToList(), cost);
+        }
         
 
         public void AddVertex(Vertex<T> vertex)
@@ -222,7 +235,7 @@ namespace PathFindingVis
 
         public bool AddEdge(Vertex<T> a, Vertex<T> b, float distance)
         {
-            if (SearchVertex(a) && SearchVertex(b))
+            if (SearchVertex(a) )
             {
                 Edge<T> AConnector = new Edge<T>(a, b, distance);
                 Edges.Add(AConnector);

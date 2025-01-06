@@ -1,7 +1,10 @@
-﻿using Microsoft.Xna.Framework;
+﻿using GraphLibrary;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended;
+using System;
+using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 
 
@@ -14,8 +17,6 @@ namespace PathFindingVis
         private MouseState ms;
         private Grid<Point> grid;
         private MouseState lastMouseState = new MouseState();
-        private Rectangle buttonRectangle;
-        SpriteFont font;
         private Graph<Point> graph;
 
         public Game1()
@@ -42,12 +43,10 @@ namespace PathFindingVis
             //font = Content.Load<SpriteFont>("Ubuntu32.spritefont");
             double screenWidth = graphics.PreferredBackBufferWidth;
             double screenHeight = graphics.PreferredBackBufferHeight;
-            buttonRectangle = new Rectangle((int) (screenWidth * 0.33) ,(int) (screenHeight * 0.45), (int) (
-                screenWidth * 0.35), (int) (screenHeight * 0.1));
 
             graph = new Graph<Point>();
             grid = new Grid<Point>(20, graphics);
-            grid.ConnectGrid();
+            ConnectGrid();
         }
 
 
@@ -59,8 +58,8 @@ namespace PathFindingVis
 
             if (keyboardState.IsKeyDown(Keys.Enter))
             {
-                grid.ConnectGrid();
-                graph.ASTAR(grid.FindStart(), grid.FindEnd());
+                ConnectGrid();
+                graph.ASTAR(FindStart(), FindEnd(), Euclidean);
             }
 
             ms = Mouse.GetState();
@@ -110,5 +109,168 @@ namespace PathFindingVis
             base.Draw(gameTime);
             
         }
+
+        public void ConnectGrid()
+        {
+            for (int i = 0; i < grid.Squares.GetLength(0); i++)
+            {
+                for (int j = 0; j < grid.Squares.GetLength(1); j++)
+                {
+                    var vertex = new Vertex<Point>(new Point(i, j));
+                    graph.AddVertex(vertex);
+                }
+            }
+
+            for (int i = 0; i < grid.Squares.GetLength(0); i++)
+            {
+                for (int j = 0; j < grid.Squares.GetLength(1); j++)
+                {
+                    BlockSquare block = new BlockSquare(0, 0);
+                    if (block.GetType() == grid.Squares[i, j].GetType())
+                    {
+                        continue;
+                    }
+                    var currentVertex = graph.Search(new Point(i, j));
+
+                    List<Point> Neighbors = new List<Point>();
+
+                    Neighbors.Add(new Point(i - 1, j));
+                    Neighbors.Add(new Point(i, j - 1));
+                    Neighbors.Add(new Point(i + 1, j));
+                    Neighbors.Add(new Point(i, j + 1));
+
+
+                    for (int k = Neighbors.Count - 1; k >= 0; k--)
+                    {
+                        if (Neighbors[k].X >= grid.Squares.GetLength(0) || Neighbors[k].X < 0
+                            || Neighbors[k].Y >= grid.Squares.GetLength(1) || Neighbors[k].Y < 0)
+                        {
+                            Neighbors.Remove(Neighbors[k]);
+                        }
+                    }
+
+
+
+                    foreach (var neigh in Neighbors)
+                    {
+
+                        if (grid.Squares[neigh.X, neigh.Y].GetType != block.GetType)
+                        {
+                            var neighborVertex = graph.Search(neigh);
+                            graph.AddEdge(currentVertex, neighborVertex, 1); // Distance between box is 1
+                        }
+                    }
+                }
+            }
+        }
+
+        void ChangeToNeigh(Edge<Point> edge)
+        {
+            for (int i = 0; i < grid.Squares.GetLength(0); i++)
+            {
+                for (int j = 0; j < grid.Squares.GetLength(1); j++)
+                {
+                    if (grid.Squares[i, j].Equals(edge.EndingPoint))
+                    {
+                        Point store = grid.Squares[i, j].location;
+                        grid.Squares[i, j] = new NeighbourSquares(store.X, store.Y);
+                    }
+                }
+            }
+        }
+
+        void ChangeToSearched(Vertex<Point> vertex)
+        {
+            for (int i = 0; i < grid.Squares.GetLength(0); i++)
+            {
+                for (int j = 0; j < grid.Squares.GetLength(1); j++)
+                {
+                    if (grid.Squares[i, j].Equals(vertex))
+                    {
+                        Point store = grid.Squares[i, j].location;
+                        grid.Squares[i, j] = new SearchdSquares(store.X, store.Y);
+                    }
+                }
+            }
+        }
+
+        Vertex<Point> FindStart()
+        {
+            for (int i = 0; i < grid.Squares.GetLength(0); i++)
+            {
+                for (int j = 0; j < grid.Squares.GetLength(1); j++)
+                {
+                    StartSquare start = new StartSquare(i, j);
+                    if (grid.Squares[i, j].GetType() == start.GetType())
+                    {
+                        foreach (Vertex<Point> vertex in graph.Vertices)
+                        {
+                            if (vertex.Value.X == i && vertex.Value.Y == j)
+                            {
+                                return vertex;
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        Vertex<Point> FindEnd()
+        {
+            for (int i = 0; i < grid.Squares.GetLength(0); i++)
+            {
+                for (int j = 0; j < grid.Squares.GetLength(1); j++)
+                {
+                    EndSquare start = new EndSquare(i, j);
+                    if (grid.Squares[i, j].GetType() == start.GetType())
+                    {
+                        foreach (Vertex<Point> vertex in graph.Vertices)
+                        {
+                            if (vertex.Value.X == i && vertex.Value.Y == j)
+                            {
+                                return vertex;
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        public float Manhattan(Vertex<Point> start, Vertex<Point> end)
+        {
+            float dx = MathF.Abs(start.Value.X - end.Value.X);
+            float dy = MathF.Abs(start.Value.Y - end.Value.Y);
+            //distance from one square to another
+            float D = 1;
+            return D * (dx + dy);
+        }
+
+
+        public float Diagonal(Vertex<Point> start, Vertex<Point> end)
+        {
+            float dx = MathF.Abs(start.Value.X - end.Value.X);
+            float dy = MathF.Abs(start.Value.Y - end.Value.Y);
+            //distance from one square to another
+            float D = 1;
+            float DTwo = MathF.Sqrt(2);
+            return D * (dx + dy) + (DTwo - 2 * D) * MathF.Min(dx, dy);
+
+        }
+
+        public float Euclidean(Vertex<Point> start, Vertex<Point> end)
+        {
+            float dx = MathF.Abs(start.Value.X - end.Value.X);
+            float dy = MathF.Abs(start.Value.X - end.Value.Y);
+            //distance from one square to another
+            float D = 1;
+            float DTwo = MathF.Sqrt(2);
+            return D * MathF.Sqrt(dx * dx + dy * dy);
+
+        }
+
     }
+
+
 }

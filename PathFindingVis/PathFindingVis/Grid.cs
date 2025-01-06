@@ -120,7 +120,6 @@ namespace PathFindingVis
     public class Grid <T>
     {
         public int NumOfLines { get; set; }
-        public Graph<Point> GraphPoint { get; set; }    
 
         public ISquare[,] Squares { get; set; }
 
@@ -134,7 +133,6 @@ namespace PathFindingVis
 
         public Grid(int lines, GraphicsDeviceManager graphics)
         {
-            GraphPoint = new Graph<Point>(lines, graphics);
             NumOfLines = lines;
             size = graphics.PreferredBackBufferWidth / lines;
             Squares = new ISquare[lines, lines];
@@ -155,135 +153,6 @@ namespace PathFindingVis
             Squares[Squares.GetLength(0) - 1, 0] = new EndSquare((Squares.GetLength(0) - 1) * size ,0);
         }
 
-        public void ConnectGrid()
-        {
-            for(int i = 0; i < Squares.GetLength(0); i++)
-            {
-                for(int j = 0; j < Squares.GetLength(1); j++)
-                {
-                    var vertex = new Vertex<Point>(new Point(i, j));
-                    GraphPoint.AddVertex(vertex);
-                }
-            }
-
-            for (int i = 0; i < Squares.GetLength(0); i++)
-            {
-                for (int j = 0; j < Squares.GetLength(1); j++)
-                {
-                    BlockSquare block = new BlockSquare(0, 0);
-                    if(block.GetType() == Squares[i,j].GetType())
-                    {
-                        continue;
-                    }
-                    var currentVertex = GraphPoint.Search(new Point(i, j));
-
-                    List<Point> Neighbors = new List<Point>();
-                    
-                    Neighbors.Add(new Point(i - 1, j));
-                    Neighbors.Add(new Point(i, j - 1));
-                    Neighbors.Add(new Point(i + 1, j));
-                    Neighbors.Add(new Point(i, j + 1));
-                    
-                    
-                    for(int k = Neighbors.Count - 1; k >= 0; k--)
-                    { 
-                        if (Neighbors[k].X >= Squares.GetLength(0) || Neighbors[k].X < 0 
-                            || Neighbors[k].Y >= Squares.GetLength(1) || Neighbors[k].Y < 0)
-                        {
-                            Neighbors.Remove(Neighbors[k]);
-                        }
-                    }
-
-                    
-
-                    foreach (var neigh in Neighbors)
-                    {
-                        
-                        if (Squares[neigh.X, neigh.Y].GetType != block.GetType)
-                        {
-                            var neighborVertex = GraphPoint.Search(neigh);
-                            GraphPoint.AddEdge(currentVertex, neighborVertex, 1); // Distance between box is 1
-                        }
-                    }
-                }
-            }
-
-
-        }
-
-        public void ChangeToNeigh(Edge<T> edge)
-        {
-            for (int i = 0; i < Squares.GetLength(0); i++)
-            {
-                for (int j = 0; j < Squares.GetLength(1); j++)
-                {
-                    if (Squares[i,j].Equals(edge.EndingPoint))
-                    {
-                        Point store = Squares[i, j].location;
-                        Squares[i, j] = new NeighbourSquares(store.X, store.Y);
-                    }
-                }
-            }
-        }
-
-        public void ChangeToSearched(Vertex<T> vertex)
-        {
-            for (int i = 0; i < Squares.GetLength(0); i++)
-            {
-                for (int j = 0; j < Squares.GetLength(1); j++)
-                {
-                    if (Squares[i, j].Equals(vertex))
-                    {
-                        Point store = Squares[i, j].location;
-                        Squares[i, j] = new SearchdSquares(store.X, store.Y);
-                    }
-                }
-            }
-        }
-
-        public Vertex<Point> FindStart()
-        {
-            for (int i = 0; i < Squares.GetLength(0); i++)
-            {
-                for (int j = 0; j < Squares.GetLength(1); j++)
-                {
-                    StartSquare start = new StartSquare(i,j);
-                    if (Squares[i, j].GetType() == start.GetType())
-                    {
-                        foreach(Vertex<Point> vertex in GraphPoint.Vertices)
-                        {
-                            if (vertex.Value.X == i && vertex.Value.Y == j)
-                            {
-                                return vertex;
-                            }
-                        }
-                    }
-                }
-            }
-            return null;
-        }
-
-        public Vertex<Point> FindEnd()
-        {
-            for (int i = 0; i < Squares.GetLength(0); i++)
-            {
-                for (int j = 0; j < Squares.GetLength(1); j++)
-                {
-                    EndSquare start = new EndSquare(i, j);
-                    if (Squares[i, j].GetType() == start.GetType())
-                    {
-                        foreach (Vertex<Point> vertex in GraphPoint.Vertices)
-                        {
-                            if (vertex.Value.X == i && vertex.Value.Y == j)
-                            {
-                                return vertex;
-                            }
-                        }
-                    }
-                }
-            }
-            return null;
-        }
 
         public void DrawGrid(SpriteBatch spriteBatch)
         {
@@ -331,37 +200,7 @@ namespace PathFindingVis
             }
         }
 
-        public float Manhattan(Vertex<Point> start, Vertex<Point> end)
-        {
-            float dx = MathF.Abs(start.Value.X - end.Value.X);
-            float dy = MathF.Abs(start.Value.Y - end.Value.Y);
-            //distance from one square to another
-            float D = 1;
-            return D * (dx + dy);
-        }
-
-
-        public float Diagonal(Vertex<Point> start, Vertex<Point> end)
-        {
-            float dx = MathF.Abs(start.Value.X - end.Value.X);
-            float dy = MathF.Abs(start.Value.Y - end.Value.Y);
-            //distance from one square to another
-            float D = 1;
-            float DTwo = MathF.Sqrt(2);
-            return D * (dx + dy) + (DTwo - 2 * D) * MathF.Min(dx, dy);
-
-        }
-
-        public float Euclidean(Vertex<Point> start, Vertex<Point> end)
-        {
-            float dx = MathF.Abs(start.Value.X - end.Value.X);
-            float dy = MathF.Abs(start.Value.X - end.Value.Y);
-            //distance from one square to another
-            float D = 1;
-            float DTwo = MathF.Sqrt(2);
-            return D * MathF.Sqrt(dx * dx + dy * dy);
-
-        }
+        
 
         public void PlaceSquare(int x, int y)
         {

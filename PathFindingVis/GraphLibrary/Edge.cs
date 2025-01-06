@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PathFindingVis
+namespace GraphLibrary
 {
     public class Edge<T> 
     {
