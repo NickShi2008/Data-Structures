@@ -74,12 +74,14 @@ namespace GraphLibrary
             return FindPath(start, end, map);
         }
 
-        public (List<Vertex<T>>, float cost) ASTAR(Vertex<T> start, Vertex<T> end, Func<Vertex<T>, Vertex<T>, float> heuristic)
+        public (List<Vertex<T>>, float cost) ASTAR(Vertex<T> start, Vertex<T> end, 
+            Func<Vertex<T>, Vertex<T>, float> heuristic)
         {
             Dictionary<Vertex<T>, float> totalDistances = new Dictionary<Vertex<T>, float>();
             List<Vertex<T>> visitedVertices = new List<Vertex<T>>();
             PriorityQueue<Vertex<T>, float> queuedDistances = new PriorityQueue<Vertex<T>, float>();
             Dictionary<Vertex<T>, (Vertex<T> founder, float cost)> map = [];
+
             foreach (var v in Vertices)
             {
                 totalDistances.Add(v, float.PositiveInfinity);
@@ -95,12 +97,11 @@ namespace GraphLibrary
 
                 if (visitedVertices.Contains(vertex))
                     continue;
-
                 visitedVertices.Add(vertex);
                 
                 foreach (var neigh in vertex.Neighbors)
-                {
-                    float finalDistance = heuristic(neigh.EndingPoint, end);
+                { 
+                    float finalDistance = totalDistances[vertex] + neigh.Distance + heuristic(neigh.EndingPoint, end);
 
                     if (finalDistance < totalDistances[neigh.EndingPoint])
                     {
@@ -115,79 +116,7 @@ namespace GraphLibrary
             return FindPath(start, end, map);
         }
 
-        /*  public void RearrangeQueue(PriorityQueue<Vertex<T>, float> queue, float originalDistance, Vertex<T> comparison)
-          {
-              PriorityQueue<Vertex<T>, float> placeHolder = new PriorityQueue<Vertex<T>, float>();
-              bool hasBeenFound = false;
-
-              while (queue.Count > 0)
-              {
-                  queue.TryDequeue(out var currentVertex, out float currentDistance);
-
-                  if (currentVertex.Equals(comparison))
-                  {
-                      hasBeenFound = true;
-                      if (originalDistance < currentDistance)
-                      {
-                          placeHolder.Enqueue(comparison, originalDistance);
-                      }
-                      else
-                      {
-                          placeHolder.Enqueue(currentVertex, currentDistance);
-                      }
-                  }
-                  else
-                  {
-                      placeHolder.Enqueue(currentVertex, currentDistance);
-                  }
-              }
-
-              if (!hasBeenFound)
-              {
-                  placeHolder.Enqueue(comparison, originalDistance);
-              }
-
-              while (placeHolder.Count > 0)
-              {
-                  placeHolder.TryDequeue(out var tempNode, out var tempPriority);
-
-                  queue.Enqueue(tempNode, tempPriority);
-              }
-          }*/
-
-        /*public List<Vertex<T>> FindPath(Vertex<T> start, Vertex<T> end, Dictionary<Vertex<T>, float> totalDistances)
-        {
-            Stack<Vertex<T>> reversePath = new Stack<Vertex<T>>();
-            Vertex<T> lastVertex = end;
-            while (!lastVertex.Equals(start))
-            {
-                foreach (var vertex in totalDistances)
-                {
-
-                    for (int i = 0; i < Edges.Count; i++)
-                    {
-                        if (Edges[i].EndingPoint.Equals(lastVertex) && Edges[i].StartingPoint.Value.Equals(vertex.Key.Value)
-                            && vertex.Value + Edges[i].Distance == totalDistances[lastVertex])
-                        {
-                            lastVertex = vertex.Key;
-                            reversePath.Push(Edges[i].EndingPoint);
-                            break;
-                        }
-                    }
-
-                }
-            }
-
-            List<Vertex<T>> path = new List<Vertex<T>>();
-
-            while (reversePath.Count > 0)
-            {
-                path.Add(reversePath.Pop());
-            }
-
-            return path;
-        }*/
-
+       
         public (List<Vertex<T>> path, float cost) FindPath(Vertex<T> start, Vertex<T> end, Dictionary<Vertex<T>, (Vertex<T> founder, float cost)> founderMap)
         {
             Stack<Vertex<T>> reversePath = new Stack<Vertex<T>>();

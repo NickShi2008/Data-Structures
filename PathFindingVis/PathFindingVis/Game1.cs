@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended;
+using MonoGame.Extended.Timers;
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
@@ -14,10 +15,16 @@ namespace PathFindingVis
     {
         private GraphicsDeviceManager graphics;
         private SpriteBatch spriteBatch;
-        private MouseState ms;
+        private MouseState ms;  
         private Grid<Point> grid;
         private MouseState lastMouseState = new MouseState();
         private Graph<Point> graph;
+        private bool isRunning = false;
+        private float timer = 0;
+        private float timerDelay = 0.5f;
+        private List<(ISquare, Vertex<Point>)> animateSquares;
+        private int count = 0;
+        private bool hasReset = true;
 
         public Game1()
         {
@@ -44,9 +51,11 @@ namespace PathFindingVis
             double screenWidth = graphics.PreferredBackBufferWidth;
             double screenHeight = graphics.PreferredBackBufferHeight;
 
+
+            animateSquares = new List<(ISquare, Vertex<Point>)>();
             graph = new Graph<Point>();
             grid = new Grid<Point>(20, graphics);
-            ConnectGrid();
+            //ConnectGrid();
         }
 
 
@@ -56,38 +65,71 @@ namespace PathFindingVis
                 Exit();
             KeyboardState keyboardState = Keyboard.GetState();
 
-            if (keyboardState.IsKeyDown(Keys.Enter))
+            if ((keyboardState.IsKeyDown(Keys.Enter) && hasReset) || isRunning)
             {
-                ConnectGrid();
-                graph.ASTAR(FindStart(), FindEnd(), Euclidean);
-            }
-
-            ms = Mouse.GetState();
-
-            if(ms.LeftButton == ButtonState.Pressed)
-            {
-                int x = ms.X;
-                int y = ms.Y;
-            }
-
-
-            
-            if (ms.LeftButton == ButtonState.Pressed && (lastMouseState.LeftButton == ButtonState.Released || grid.EnableDrag)
-                && ms.X > 0 && ms.X < graphics.PreferredBackBufferWidth && ms.Y > 0 && ms.Y < graphics.PreferredBackBufferHeight)
-            {
-                if (!grid.hasStored)
+                if (!isRunning)
                 {
-                    grid.StoreMouseClick(ms.X, ms.Y);
+                    isRunning = true;
+                    ConnectGrid();
+                    //only receiving path ); need whole animate
+                    (List<Vertex<Point>>, float) tracker = graph.ASTAR(FindStart(), FindEnd(), Euclidean);
+                   // (List<Vertex<Point>>, float) tracker = graph.Dijkstra(FindStart(), FindEnd());
+                    foreach (Vertex<Point> vertex in tracker.Item1)
+                    {
+                        for (int i = 0; i < graph.VertexCount; i++)
+                        {
+                            if (vertex.Equals(graph.Vertices[i]))
+                            {
+
+                                int x = i / 20;
+                                int y = i % 20;
+
+                                animateSquares.Add((grid.Squares[x, y], graph.Vertices[i]));
+                            }
+                        }
+                    }
                 }
-                else
-                {
-                    grid.PlaceSquare(ms.X, ms.Y);
-                }
+
+                AnimatePath(gameTime);
                 
-
             }
-            // TODO: Add your update logic here
-            lastMouseState = ms;
+            else if (!isRunning && hasReset)
+            {
+                ms = Mouse.GetState();
+
+                if (ms.LeftButton == ButtonState.Pressed)
+                {
+                    int x = ms.X;
+                    int y = ms.Y;
+                }
+
+
+
+                if (ms.LeftButton == ButtonState.Pressed && (lastMouseState.LeftButton == ButtonState.Released || grid.EnableDrag)
+                    && ms.X > 0 && ms.X < graphics.PreferredBackBufferWidth && ms.Y > 0 && ms.Y < graphics.PreferredBackBufferHeight)
+                {
+                    if (!grid.hasStored)
+                    {
+                        grid.StoreMouseClick(ms.X, ms.Y);
+                    }
+                    else
+                    {
+                        grid.PlaceSquare(ms.X, ms.Y);
+                    }
+
+
+                }
+                // TODO: Add your update logic here
+                lastMouseState = ms;
+            }
+            else if(keyboardState.IsKeyDown(Keys.Back) && !hasReset)
+            {
+                animateSquares = new List<(ISquare, Vertex<Point>)>();
+                graph = new Graph<Point>();
+                grid = new Grid<Point>(20, graphics);
+                hasReset = true;
+                count = 0;
+            }
 
             base.Update(gameTime);
         }
@@ -112,11 +154,16 @@ namespace PathFindingVis
 
         public void ConnectGrid()
         {
+            if (graph.VertexCount > 0)
+            {
+                graph.Vertices.Clear();
+            }
             for (int i = 0; i < grid.Squares.GetLength(0); i++)
             {
                 for (int j = 0; j < grid.Squares.GetLength(1); j++)
                 {
                     var vertex = new Vertex<Point>(new Point(i, j));
+                    
                     graph.AddVertex(vertex);
                 }
             }
@@ -164,16 +211,20 @@ namespace PathFindingVis
             }
         }
 
-        void ChangeToNeigh(Edge<Point> edge)
+        void ChangeToNeigh(Vertex<Point> vertex)
         {
             for (int i = 0; i < grid.Squares.GetLength(0); i++)
             {
                 for (int j = 0; j < grid.Squares.GetLength(1); j++)
                 {
-                    if (grid.Squares[i, j].Equals(edge.EndingPoint))
+                    for (int k = 0; k < animateSquares.Count; k++)
                     {
-                        Point store = grid.Squares[i, j].location;
-                        grid.Squares[i, j] = new NeighbourSquares(store.X, store.Y);
+                        if (grid.Squares[i, j].Equals(animateSquares[k].Item1)
+                            && animateSquares[k].Item2.Equals(vertex))
+                        {
+                            Point store = grid.Squares[i, j].location;
+                            grid.Squares[i, j] = new NeighbourSquares(store.X, store.Y);
+                        }
                     }
                 }
             }
@@ -181,14 +232,19 @@ namespace PathFindingVis
 
         void ChangeToSearched(Vertex<Point> vertex)
         {
+            
             for (int i = 0; i < grid.Squares.GetLength(0); i++)
             {
                 for (int j = 0; j < grid.Squares.GetLength(1); j++)
                 {
-                    if (grid.Squares[i, j].Equals(vertex))
+                    for (int k = 0; k < animateSquares.Count; k++)
                     {
-                        Point store = grid.Squares[i, j].location;
-                        grid.Squares[i, j] = new SearchdSquares(store.X, store.Y);
+                        if (grid.Squares[i, j].Equals(animateSquares[k].Item1)
+                            && animateSquares[k].Item2.Equals(vertex))
+                        {
+                            Point store = grid.Squares[i, j].location;
+                            grid.Squares[i, j] = new SearchdSquares(store.X, store.Y);
+                        }
                     }
                 }
             }
@@ -268,6 +324,44 @@ namespace PathFindingVis
             float DTwo = MathF.Sqrt(2);
             return D * MathF.Sqrt(dx * dx + dy * dy);
 
+        }
+        
+
+        void AnimatePath(GameTime gameTime)
+        {
+            timer += (float)gameTime.ElapsedGameTime.TotalSeconds * 10;
+            if (timer > timerDelay && animateSquares.Count - 1 > count)
+                {
+                    for (int i = 0; i < count; i++)
+                    {
+                        foreach (var check in animateSquares[i].Item2.Neighbors)
+                        {
+                            if (check.Equals(animateSquares[count].Item2))
+                            {
+                                ChangeToNeigh(animateSquares[count].Item2);
+                               // animateSquares[count] = (new NeighbourSquares(animateSquares[count].Item1.location.X
+                                //, animateSquares[count].Item1.location.Y), animateSquares[count].Item2);
+                            }
+                        }
+                    }
+
+                    ChangeToSearched(animateSquares[count].Item2);
+                 //   animateSquares[count] = (new SearchdSquares(animateSquares[count].Item1.location.X
+                  //      , animateSquares[count].Item1.location.Y), animateSquares[count].Item2);
+                    count++;
+                    timer = 0;
+                }
+            else if(animateSquares.Count - 1 <= count)
+            {
+                hasReset = false;
+                isRunning = false;
+            }
+
+            
+
+
+           
+            
         }
 
     }

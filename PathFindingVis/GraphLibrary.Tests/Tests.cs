@@ -54,7 +54,7 @@ namespace GraphLibrary.Tests
         }
 
         public List<object[]> arr => [
-            [GenerateGraph(), new Point(0, 0), new Point(1, 1), 2]
+            [GenerateGraph(), new Point(0, 0), new Point(2, 2), 4]
             
         ];
 
@@ -85,7 +85,7 @@ namespace GraphLibrary.Tests
             var path = graph.ASTAR(graph.Search(start), graph.Search(end), Manhattan);
 
 
-            Assert.True(path.Count == expectedCost);
+            Assert.True(path.Item1.Count == expectedCost);
         }
 
 

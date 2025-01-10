@@ -17,7 +17,6 @@ namespace PathFindingVis
 {
     public interface ISquare
     {
-
         public Point location { get; set; }
         abstract void Draw(SpriteBatch sb, Point size);
 
@@ -34,6 +33,20 @@ namespace PathFindingVis
         public void Draw(SpriteBatch sb, Point size)
         {
             sb.FillRectangle(new Rectangle(location, size), Color.AntiqueWhite);
+        }
+    }
+
+    public class PathSquare : ISquare
+    {
+        public Point location { get; set; }
+
+        public PathSquare(int x, int y)
+        {
+            location = new Point(x, y);
+        }
+        public void Draw(SpriteBatch sb, Point size)
+        {
+            sb.FillRectangle(new Rectangle(location, size), Color.MediumSlateBlue);
         }
     }
 
@@ -79,7 +92,7 @@ namespace PathFindingVis
         }
         public void Draw(SpriteBatch sb, Point size)
         {
-            sb.FillRectangle(new Rectangle(location, size), Color.LightGoldenrodYellow);
+            sb.FillRectangle(new Rectangle(location, size), Color.LightYellow);
         }
     }
 
@@ -161,6 +174,8 @@ namespace PathFindingVis
                 square.Draw(spriteBatch, new Point(size - 1)); 
             }
         }
+
+        
 
         public void StoreMouseClick(int x, int y)
         {
