@@ -1,5 +1,4 @@
-﻿using static System.Net.Mime.MediaTypeNames;
-
+﻿
 namespace NonComparative_Sorts
 {
     public class Program
@@ -13,10 +12,10 @@ namespace NonComparative_Sorts
             Random random = new Random();
             int randInt = random.Next(min, max);
             List<int> test = new List<int>();
-            for (int i = -20; i < 20; i++)
+            for (int i = -20; i < 21; i++)
             {
-                 test.Add(i);
-               // test.Add(randInt);
+                test.Add(i);
+                // test.Add(randInt);
                 //randInt = random.Next(0, 10);
             }
 
@@ -30,7 +29,8 @@ namespace NonComparative_Sorts
                    count[integer]++;
                }*/
 
-          // CountingSort(test);
+             CountingSort(test);
+            BucketSort(test, 5);
             foreach (var val in test)
                 Console.WriteLine(val);
         }
@@ -48,9 +48,9 @@ namespace NonComparative_Sorts
             }
             return list;
         }
-        
-       public static void CountingSort(List<int> list)
-       {
+
+        public static void CountingSort(List<int> list)
+        {
             int min = list.Min();
             int max = list.Max();
 
@@ -60,12 +60,11 @@ namespace NonComparative_Sorts
 
             foreach (int integer in list)
             {
-                  count[integer - min]++;
+                count[integer - min]++;
             }
 
-            for(int i = 0; i < count.Length; i++)
+            for (int i = 0; i < count.Length; i++)
             {
-              
                 for (int j = 0; j < count[i]; j++)
                 {
                     list[counter++] = i + min;
@@ -79,12 +78,52 @@ namespace NonComparative_Sorts
             int min = list.Min();
             int max = list.Max();
 
+            int size = max - min + 1;
+            int[] sortedArray = new int[size];
             List<int[]> buckets = new List<int[]>();
 
-            int[] count = new int[max - min + 1];
-            int[] sortedArray = new int[count.Length];
+            for(int i = 0; i < numOfBuckets; i++)
+            {
+                buckets.Add(new int[(sortedArray.Length / numOfBuckets) + (i < size % numOfBuckets ? 1 : 0)]);
+            }
 
-            
+            /* foreach (int integer in list)
+             {
+                 //finding bucket array method
+                 //ex:40/8 and 0/8 
+                 //index has to be the  value - min module bucket length?
+                 int bucketIndex = ((integer - min) * numOfBuckets) / size;
+                 int indexInBucket = ((integer - min) % ((int)Math.Ceiling(size / (double)numOfBuckets)));
+                 buckets[bucketIndex][indexInBucket] = integer;
+             }
+            */
+            int[] bucketIndices = new int[numOfBuckets];
+
+            foreach (int integer in list)
+            {
+                int bucketIndex = (integer - min) * numOfBuckets / size;
+
+                buckets[bucketIndex][bucketIndices[bucketIndex]++] = integer;
+            }
+
+            foreach (var bucket in buckets)
+            {
+                Array.Sort(bucket); 
+            }
+
+            int count = 0;
+            foreach (var bucket in buckets)
+            {
+                foreach (var value in bucket)
+                {
+                    sortedArray[count++] = value;
+                }
+            }
+
+            for (int i = 0; i < sortedArray.Length; i++)
+            {
+                list[i] = sortedArray[i];
+            }
         }
 
 
