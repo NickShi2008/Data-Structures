@@ -1,4 +1,8 @@
 ﻿
+using System.Collections.Immutable;
+using System.Drawing;
+using System.Net.Sockets;
+
 namespace NonComparative_Sorts
 {
     public class Program
@@ -29,8 +33,9 @@ namespace NonComparative_Sorts
                    count[integer]++;
                }*/
 
-             CountingSort(test);
-            BucketSort(test, 5);
+            //  CountingSort(test);
+            //BucketSort(test, 5);
+            RadixSort(test);
             foreach (var val in test)
                 Console.WriteLine(val);
         }
@@ -79,51 +84,72 @@ namespace NonComparative_Sorts
             int max = list.Max();
 
             int size = max - min + 1;
-            int[] sortedArray = new int[size];
             List<int[]> buckets = new List<int[]>();
 
             for(int i = 0; i < numOfBuckets; i++)
             {
-                buckets.Add(new int[(sortedArray.Length / numOfBuckets) + (i < size % numOfBuckets ? 1 : 0)]);
+                buckets.Add(new int[(size / numOfBuckets) + (i < size % numOfBuckets ? 1 : 0)]);
             }
 
-            /* foreach (int integer in list)
-             {
-                 //finding bucket array method
-                 //ex:40/8 and 0/8 
-                 //index has to be the  value - min module bucket length?
-                 int bucketIndex = ((integer - min) * numOfBuckets) / size;
-                 int indexInBucket = ((integer - min) % ((int)Math.Ceiling(size / (double)numOfBuckets)));
-                 buckets[bucketIndex][indexInBucket] = integer;
-             }
-            */
-            int[] bucketIndices = new int[numOfBuckets];
+            int[] IndicesForBuckets = new int[numOfBuckets];
 
             foreach (int integer in list)
             {
                 int bucketIndex = (integer - min) * numOfBuckets / size;
 
-                buckets[bucketIndex][bucketIndices[bucketIndex]++] = integer;
-            }
-
-            foreach (var bucket in buckets)
-            {
-                Array.Sort(bucket); 
+                buckets[bucketIndex][IndicesForBuckets[bucketIndex]++] = integer;
             }
 
             int count = 0;
             foreach (var bucket in buckets)
             {
+                Array.Sort(bucket);
                 foreach (var value in bucket)
                 {
-                    sortedArray[count++] = value;
+                    list[count++] = value;
+                }
+            }
+           
+        }
+
+        public static void RadixSort(List<int> list)
+        {
+            int min = list.Min();
+            int max = list.Max();
+            int size = max - min + 1;
+
+            int[] buckets = new int[10];
+            int[] sortedList = new int[list.Count];
+
+
+            for(int digitPlace = 0; digitPlace < max.ToString().Length; digitPlace++)
+            {
+                foreach(int integer in list)
+                {
+                   buckets[(integer - min)/ ((int) Math.Pow(10, digitPlace)) % 10 ]++;
+                }
+
+                for (int j = 1; j < buckets.Length; j++)
+                {
+                    buckets[j] += buckets[j - 1];
+                }
+
+                for (int i = list.Count - 1; i >= 0; i--)
+                {
+                    sortedList[--buckets[(list[i] - min) / (int) Math.Pow(10, digitPlace) % 10]] = list[i];
+                }
+
+
+                Array.Clear(buckets);
+
+                int count = 0;
+                foreach (var value in sortedList)
+                {
+                    list[count++] = value;
                 }
             }
 
-            for (int i = 0; i < sortedArray.Length; i++)
-            {
-                list[i] = sortedArray[i];
-            }
+            
         }
 
 
