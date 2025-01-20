@@ -1,4 +1,7 @@
-﻿using static System.Net.Mime.MediaTypeNames;
+﻿
+using System.Collections.Immutable;
+using System.Drawing;
+using System.Net.Sockets;
 
 namespace NonComparative_Sorts
 {
@@ -13,10 +16,10 @@ namespace NonComparative_Sorts
             Random random = new Random();
             int randInt = random.Next(min, max);
             List<int> test = new List<int>();
-            for (int i = -20; i < 20; i++)
+            for (int i = -20; i < 21; i++)
             {
-                 test.Add(i);
-               // test.Add(randInt);
+                test.Add(i);
+                // test.Add(randInt);
                 //randInt = random.Next(0, 10);
             }
 
@@ -30,7 +33,9 @@ namespace NonComparative_Sorts
                    count[integer]++;
                }*/
 
-          // CountingSort(test);
+            //  CountingSort(test);
+            //BucketSort(test, 5);
+            RadixSort(test);
             foreach (var val in test)
                 Console.WriteLine(val);
         }
@@ -48,9 +53,9 @@ namespace NonComparative_Sorts
             }
             return list;
         }
-        
-       public static void CountingSort(List<int> list)
-       {
+
+        public static void CountingSort(List<int> list)
+        {
             int min = list.Min();
             int max = list.Max();
 
@@ -60,12 +65,11 @@ namespace NonComparative_Sorts
 
             foreach (int integer in list)
             {
-                  count[integer - min]++;
+                count[integer - min]++;
             }
 
-            for(int i = 0; i < count.Length; i++)
+            for (int i = 0; i < count.Length; i++)
             {
-              
                 for (int j = 0; j < count[i]; j++)
                 {
                     list[counter++] = i + min;
@@ -79,10 +83,71 @@ namespace NonComparative_Sorts
             int min = list.Min();
             int max = list.Max();
 
+            int size = max - min + 1;
             List<int[]> buckets = new List<int[]>();
 
-            int[] count = new int[max - min + 1];
-            int[] sortedArray = new int[count.Length];
+            for(int i = 0; i < numOfBuckets; i++)
+            {
+                buckets.Add(new int[(size / numOfBuckets) + (i < size % numOfBuckets ? 1 : 0)]);
+            }
+
+            int[] IndicesForBuckets = new int[numOfBuckets];
+
+            foreach (int integer in list)
+            {
+                int bucketIndex = (integer - min) * numOfBuckets / size;
+
+                buckets[bucketIndex][IndicesForBuckets[bucketIndex]++] = integer;
+            }
+
+            int count = 0;
+            foreach (var bucket in buckets)
+            {
+                Array.Sort(bucket);
+                foreach (var value in bucket)
+                {
+                    list[count++] = value;
+                }
+            }
+           
+        }
+
+        public static void RadixSort(List<int> list)
+        {
+            int min = list.Min();
+            int max = list.Max();
+            int size = max - min + 1;
+
+            int[] buckets = new int[10];
+            int[] sortedList = new int[list.Count];
+
+
+            for(int digitPlace = 0; digitPlace < max.ToString().Length; digitPlace++)
+            {
+                foreach(int integer in list)
+                {
+                   buckets[(integer - min)/ ((int) Math.Pow(10, digitPlace)) % 10 ]++;
+                }
+
+                for (int j = 1; j < buckets.Length; j++)
+                {
+                    buckets[j] += buckets[j - 1];
+                }
+
+                for (int i = list.Count - 1; i >= 0; i--)
+                {
+                    sortedList[--buckets[(list[i] - min) / (int) Math.Pow(10, digitPlace) % 10]] = list[i];
+                }
+
+
+                Array.Clear(buckets);
+
+                int count = 0;
+                foreach (var value in sortedList)
+                {
+                    list[count++] = value;
+                }
+            }
 
             
         }
