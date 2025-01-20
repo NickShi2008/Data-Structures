@@ -37,7 +37,22 @@ namespace HashMap
 
         public ICollection<TValue> Values => throw new NotImplementedException();
 
-        public int Count => HashArray.Length;
+        public int Count
+        {
+            get
+            {
+                int count = 0;
+                foreach(var linkedList in HashArray)
+                {
+                    foreach(var pair in linkedList)
+                    {
+                        count++;
+                    }
+                }
+
+                return count;
+            }
+        }
 
         public bool IsReadOnly => false;
 
@@ -141,7 +156,13 @@ namespace HashMap
 
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
         {
-            throw new NotImplementedException();
+            foreach (var linkedList in HashArray)
+            {
+                foreach (var pair in linkedList)
+                {
+                    yield return pair;
+                }
+            }
         }
 
         public bool Remove(TKey key)
@@ -189,9 +210,11 @@ namespace HashMap
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            throw new NotImplementedException();
+            return (IEnumerator)GetEnumerator();
         }
 
         
     }
+
+
 }
