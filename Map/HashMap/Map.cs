@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.IO.Pipes;
 using System.Linq;
 using System.Numerics;
 using System.Reflection.Metadata.Ecma335;
@@ -33,21 +34,57 @@ namespace HashMap
         }
 
         private LinkedList<KeyValuePair<TKey, TValue>>[] HashArray = new LinkedList<KeyValuePair<TKey, TValue>>[10];
-        public ICollection<TKey> Keys => throw new NotImplementedException();
+        public ICollection<TKey> Keys => GetKeys();
 
-        public ICollection<TValue> Values => throw new NotImplementedException();
+        public ICollection<TValue> Values => GetValues();
+
+        ICollection<TKey> GetKeys()
+        {
+            ICollection<TKey> keys = new HashSet<TKey>();
+            if (HashArray == null) throw new NullReferenceException();
+            foreach(var linkedList in HashArray)
+            {
+                if (linkedList == null) continue;
+                foreach(var pair in linkedList)
+                {
+                    keys.Add(pair.Key);
+                }
+            }
+            return keys;
+        }
+
+        ICollection<TValue> GetValues()
+        {
+            ICollection<TValue> values = new HashSet<TValue>();
+            if (HashArray == null) throw new NullReferenceException();
+            foreach (var linkedList in HashArray)
+            {
+                if (linkedList == null) continue;
+                foreach (var pair in linkedList)
+                {
+                    values.Add(pair.Value);
+                }
+            }
+            return values;
+        }
 
         public int Count
         {
             get
             {
                 int count = 0;
+
                 foreach(var linkedList in HashArray)
                 {
-                    foreach(var pair in linkedList)
+                    if(linkedList != null)
                     {
-                        count++;
+                        foreach (var pair in linkedList)
+                        {
+                            count++;
+                        }
                     }
+
+                    
                 }
 
                 return count;
@@ -58,7 +95,7 @@ namespace HashMap
 
         int GetHashCode(TKey key)
         {
-            return Math.Abs(key.GetHashCode() % Count);
+            return Math.Abs(key.GetHashCode() % HashArray.Length);
         }
         public void Add(TKey key, TValue value)
         {
@@ -140,28 +177,33 @@ namespace HashMap
         {
             if(array == null) throw new ArgumentNullException(nameof(array));
             else if(arrayIndex >= array.Length) throw new ArgumentOutOfRangeException(nameof(arrayIndex));
-            List<KeyValuePair<TKey, TValue>> list = [];
-
+           
+            int count = 0;
             for(int i = arrayIndex; i < HashArray.Length; i++)
             {
+                if (HashArray[i] == null) continue;
                 foreach(var pair in HashArray[i])
                 {
-                    list.Add(pair);
+                    array[count++] = pair;
                 }
             }
 
+
           
-            array = list.ToArray(); 
         }
 
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
         {
             foreach (var linkedList in HashArray)
             {
-                foreach (var pair in linkedList)
+                if(linkedList!=null)
                 {
-                    yield return pair;
+                    foreach (var pair in linkedList)
+                    {
+                        yield return pair;
+                    }
                 }
+                
             }
         }
 
@@ -184,7 +226,9 @@ namespace HashMap
 
         public bool Remove(KeyValuePair<TKey, TValue> item)
         {
-            if(item.Equals(null)) throw new NullReferenceException(nameof(item)); 
+            if(item.Equals(null) || HashArray[GetHashCode(item.Key)] == null) 
+                throw new NullReferenceException(nameof(item)); 
+            
             return HashArray[GetHashCode(item.Key)].Remove(item);
         }
 
