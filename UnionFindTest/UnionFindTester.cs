@@ -10,9 +10,12 @@ namespace UnionFindTest
             public string FriendA { get; set; }
             public string FriendB { get; set; }
         }
-        string edges = File.ReadAllText("C:\\Users\\Nicholas.Shi\\Downloads\\FriendsProblemEdges.txt");
-        string vertices = File.ReadAllText("C:\\Users\\Nicholas.Shi\\Downloads\\FriendsProblemVertices.txt");
-       
+        //Gmr
+        // string edges = File.ReadAllText("C:\\Users\\Nicholas.Shi\\Downloads\\FriendsProblemEdges.txt");
+        // string vertices = File.ReadAllText("C:\\Users\\Nicholas.Shi\\Downloads\\FriendsProblemVertices.txt");
+        string edges = File.ReadAllText("C:\\Users\\nickj\\Downloads\\FriendsProblemEdges.txt");
+        string vertices = File.ReadAllText("C:\\Users\\nickj\\Downloads\\FriendsProblemVertices.txt");
+
         [Fact]
         public void QuickUnionUnion()
         {
@@ -57,7 +60,7 @@ namespace UnionFindTest
                 Assert.True(union.Union(link.FriendA, link.FriendB));
             }
 
-            Assert.True(people[0] == people[1]);
+            Assert.True(union.Find(people[0]) == 0);
         }
 
         [Fact]
@@ -72,8 +75,6 @@ namespace UnionFindTest
                 union.Union(link.FriendA, link.FriendB);
                 Assert.True(union.AreConnected(link.FriendA, link.FriendB));
             }
-
-
             
         }
     }
