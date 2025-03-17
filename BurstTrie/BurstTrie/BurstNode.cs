@@ -17,6 +17,7 @@ namespace BurstTries
 
         // Abstract recursive insertion function, returns replacement value for back-propagation 
         public abstract BurstNode Insert(string value, int index);
+
         // Abstract recursive deletion function, returns replacement value for back-propagation    
         public abstract BurstNode? Remove(string value, int index, out bool success);
         // Get a Node containing a defined prefix

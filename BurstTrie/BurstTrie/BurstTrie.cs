@@ -8,6 +8,12 @@ namespace BurstTries
 {
     public class BurstTrie
     {
+        ContainerNode Root { get; set; }
+
+        public BurstTrie()
+        {
+
+        }
 
 
     }
