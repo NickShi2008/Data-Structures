@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace BurstTries
 {
@@ -18,7 +19,7 @@ namespace BurstTries
 
         public BSTNode<T> Search(BSTNode<T> node, T value)
         {
-            if (node == null) throw new NullReferenceException();
+            if (node == null) return null;
             else if (node.Value.Equals(value)) return node;
 
             BSTNode<T> match = new BSTNode<T>();
@@ -29,6 +30,8 @@ namespace BurstTries
 
             return match;
         }
+
+     
 
         public BSTNode<T> Minimum(BSTNode<T> node)
         {

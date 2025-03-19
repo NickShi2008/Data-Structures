@@ -40,18 +40,37 @@ namespace BurstTries
 
         public override BurstNode? Remove(string value, int index, out bool success)
         {
-            array[value[index].GetHashCode() % 26 + 1].Search(value, index);
-            throw new NotImplementedException();
+            int i = value[index].GetHashCode() % 26 + 1;
+            array[i].Remove(value, index, out success);
+            if(success)
+                return this;
+            return null;
+            
         }
 
         public override BurstNode? Search(string prefix, int index)
         {
-            throw new NotImplementedException();
+            int i = prefix[index].GetHashCode() % 26 + 1;
+            if (array[i].Search(prefix, index) != null)
+                return this;
+            return null;
         }
 
         internal override void GetAll(List<string> output)
         {
-            throw new NotImplementedException();
+            List<List<string>> container = new List<List<string>>(27);
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i].GetAll(container[i]);
+            }
+
+            foreach (var list in container)
+            {
+                foreach(var val in list)
+                {
+                    output.Add(val);
+                }
+            }
         }
     }
 }
