@@ -47,7 +47,8 @@ namespace BurstTries
 
         public override BurstNode? Search(string prefix, int index)
         {
-            throw new NotImplementedException();
+            bstTree.Search(bstTree.Root, prefix);
+            return this;
         }
 
         internal override void GetAll(List<string> output)

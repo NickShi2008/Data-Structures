@@ -16,11 +16,11 @@ namespace BurstTries
             Trie = trie;
             for(int i = 0; i < array.Length; i++)
             {
-                array = new ContainerNode(trie);
+                array[i] = new ContainerNode(trie);
             }
         }
 
-        public override int Count => throw new NotImplementedException();
+        public override int Count => array.Count();
 
 
 
@@ -31,14 +31,16 @@ namespace BurstTries
                 //Remember to ask if index should be reset when Nil index bursts
                 array[0].Insert(value, index);
             }
-            for(int i = 1; i < array.Length; i++)
+            else
             {
-               
+                array[value[index].GetHashCode() % 26 + 1].Insert(value,index);
             }
+            return this;
         }
 
         public override BurstNode? Remove(string value, int index, out bool success)
         {
+            array[value[index].GetHashCode() % 26 + 1].Search(value, index);
             throw new NotImplementedException();
         }
 
