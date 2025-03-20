@@ -192,19 +192,63 @@ namespace HashMap
           
         }
 
+        public struct Enumerator : IEnumerator<KeyValuePair<TKey, TValue>>
+        {
+            LinkedList<KeyValuePair<TKey, TValue>>[] array;
+            LinkedListNode<KeyValuePair<TKey, TValue>> current;
+            public KeyValuePair<TKey, TValue> Current
+            {
+                get
+                {
+                    return current == null ? throw new InvalidOperationException("Remember the deli meat") : current.Value;
+                }
+            }
+            public Enumerator(LinkedList<KeyValuePair<TKey, TValue>>[] arr)
+            {
+                this.array = arr;
+                current = null;
+            }
+
+            object IEnumerator.Current => Current;
+            public void Dispose() { }
+            public bool MoveNext()
+            {
+                if(current == null)
+                {
+                   // current = ;
+                    return true;
+                }
+                if (current.Next == null) return false;
+
+                current = current.Next;
+                return true;
+             }
+
+            public void Reset()
+            {
+                current = null;
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
         {
-            foreach (var linkedList in HashArray)
+           /* foreach (LinkedList<KeyValuePair<TKey,TValue>> linkedList in HashArray)
             {
-                if(linkedList!=null)
+                if (linkedList != null)
                 {
-                    foreach (var pair in linkedList)
+                    foreach (KeyValuePair<TKey,TValue> pair in linkedList)
                     {
-                        yield return pair;
-                    }
-                }
-                
-            }
+                        //yield return pair;*/
+                        return new Enumerator(HashArray);
+                  //  }
+               // }
+
+          
+          //  }
         }
 
         public bool Remove(TKey key)
@@ -252,10 +296,6 @@ namespace HashMap
             return false;
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return (IEnumerator)GetEnumerator();
-        }
 
         
     }
