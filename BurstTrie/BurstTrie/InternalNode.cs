@@ -8,16 +8,17 @@ namespace BurstTries
 {
     internal class InternalNode : BurstNode
     {
-        BurstNode[] array = new BurstNode[27];
+        BurstNode[] array;
         BurstTrie Trie { get; set; }
-        public InternalNode(BurstTrie trie)
+        public InternalNode(BurstTrie trie, char min, char max)
             : base(trie)
         {
             Trie = trie;
             for(int i = 0; i < array.Length; i++)
             {
-                array[i] = new ContainerNode(trie);
+                array[i] = new ContainerNode(trie, min, max);
             }
+            array = new BurstNode[max - min];
         }
 
         public override int Count => array.Count();
@@ -51,9 +52,7 @@ namespace BurstTries
         public override BurstNode? Search(string prefix, int index)
         {
             int i = prefix[index].GetHashCode() % 26 + 1;
-            if (array[i].Search(prefix, index) != null)
-                return this;
-            return null;
+            return array[i].Search(prefix, index);
         }
 
         internal override void GetAll(List<string> output)

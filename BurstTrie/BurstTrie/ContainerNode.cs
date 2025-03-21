@@ -9,11 +9,16 @@ namespace BurstTries
     public class ContainerNode : BurstNode
     {
         BinarySearchTree<string> bstTree;
+        char min;
+        char max;
         BurstTrie Trie { get; set; }
-        public ContainerNode(BurstTrie trie) 
+        public ContainerNode(BurstTrie trie, char min, char max) 
            : base(trie)
         {
             Trie = trie;
+            min = min;
+            max = max;
+            bstTree = new BinarySearchTree<string>();
         }
 
         public override int Count => bstTree.Count;
@@ -25,7 +30,7 @@ namespace BurstTries
             {
                 if(Count > burstSize)
                 {
-                    InternalNode internalNode = new InternalNode(Trie);
+                    InternalNode internalNode = new InternalNode(Trie, min, max);
                     while(bstTree.Count > 0)
                     {
                         internalNode.Insert(bstTree.Root.Value, index);
@@ -35,7 +40,7 @@ namespace BurstTries
                 return this;
             }
             bstTree.Insert(value);
-            return Insert(value, 1);
+            return this;
         }
 
         public override BurstNode? Remove(string value, int index, out bool success)
@@ -62,7 +67,7 @@ namespace BurstTries
             Queue<string> tracker = new Queue<string>();
             Stack<BSTNode<string>> returner = new Stack<BSTNode<string>>();
             InOrder(bstTree.Root, tracker, returner);
-            output = tracker.ToList<string>();
+            output.AddRange(tracker);
         }
 
         private BSTNode<string> InOrder(BSTNode<string> current, Queue<string> trackQueue, Stack<BSTNode<string>> returnStack)
@@ -71,7 +76,11 @@ namespace BurstTries
 
             if(current.LeftChild == null && current.RightChild == null)
             {
-                current = InOrder(returnStack.Pop(), trackQueue, returnStack);
+                if(returnStack.Count == 0)
+                {
+                    return current;
+                }
+                    current = InOrder(returnStack.Pop(), trackQueue, returnStack);
             }
 
             if (current.LeftChild != null && current.RightChild != null)

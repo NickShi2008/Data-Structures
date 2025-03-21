@@ -58,25 +58,27 @@ namespace BurstTries
         public bool IsLeftChild(BSTNode<T> node)
         {
             if (node == null || node.Parent == null) throw new NullReferenceException();
+            if (node.Parent.LeftChild == null) return false;
             return node.Parent.LeftChild.Equals(node);
         }
 
         public bool IsRightChild(BSTNode<T> node)
         {
             if (node == null || node.Parent == null) throw new NullReferenceException();
+            if (node.Parent.RightChild == null) return false;
             return node.Parent.RightChild.Equals(node);
         }
 
         public void Insert(T val)
         {
             if (val == null) throw new NullReferenceException();
-            Root = InsertHelper(Root, val);
+            Root = InsertHelper(Root, val, null);
             Count++;
         }
 
-        private BSTNode<T> InsertHelper(BSTNode<T> node, T val)
+        private BSTNode<T> InsertHelper(BSTNode<T> node, T val, BSTNode<T> parent)
         {
-            BSTNode<T> temp = new BSTNode<T>(val);
+            BSTNode<T> temp = new BSTNode<T>(val, parent);
             if (Root == null)
             {
                 node = temp;
@@ -85,14 +87,17 @@ namespace BurstTries
             else if(node == null)
             {
                 node = temp;
-                if (IsLeftChild(node)) node.Parent.LeftChild = node;
+                // if (IsLeftChild(node)) node.Parent.LeftChild = node;
+                // else node.Parent.RightChild = node;
+                if (parent.Value.CompareTo(node.Value) > 0) node.Parent.LeftChild = node;
                 else node.Parent.RightChild = node;
 
-                return node;
+
+                    return node;
             }
 
-            if (val.CompareTo(node.Value) < 0) node.LeftChild = InsertHelper(node.LeftChild, val);
-            else node.RightChild = InsertHelper(node.RightChild, val);
+            if (val.CompareTo(node.Value) < 0) node.LeftChild = InsertHelper(node.LeftChild, val, node);
+            else node.RightChild = InsertHelper(node.RightChild, val, node);
 
 
             return node;

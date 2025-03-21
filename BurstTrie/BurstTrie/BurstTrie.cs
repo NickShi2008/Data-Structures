@@ -9,10 +9,9 @@ namespace BurstTries
     public class BurstTrie
     {
         private BurstNode Root { get; set; }
-
         public BurstTrie(char min, char max)
         {
-
+            Root = new ContainerNode(this, min, max);
         }
 
         public BurstNode Insert(string value, int index)
@@ -30,7 +29,7 @@ namespace BurstTries
             return Root.Search(prefix, index);
         }
         // Gets all items in order recursively
-        internal void GetAll(List<string> output)
+        public void GetAll(List<string> output)
         {
             Root.GetAll(output);
         }
