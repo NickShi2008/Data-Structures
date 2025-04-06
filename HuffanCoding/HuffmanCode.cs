@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace HuffmanCoding
 {
@@ -10,28 +13,40 @@ namespace HuffmanCoding
     {
         public PriorityQueue<HuffmanNode, int> priorityQueue;
         Dictionary<char, int> letterTracker;
-        Dictionary<char, string> charConverter;
+        Dictionary<char, string> charToString;
+        Dictionary<char, byte> charToByte;
+        Dictionary<byte, char> byteToChar;
+        List<byte> code;
         public HuffmanCode()
         {
             priorityQueue = new PriorityQueue<HuffmanNode, int>();
-
+            charToString = new Dictionary<char, string>();
             letterTracker = new Dictionary<char, int>();
+            charToByte = new Dictionary<char, byte>();
+            byteToChar = new Dictionary<byte, char>();
 
         }
 
         public string Encode(string text)
         {
+            letterTracker.Clear();
+            charToString.Clear();
+            priorityQueue.Clear();
             foreach (char c in text)
             {
+                if (!letterTracker.ContainsKey(c))
+                {
+                    letterTracker.Add(c, 0);
+                }
                 letterTracker[c]++;
             }
 
             foreach (var i in letterTracker)
             {
-                var huffynode = new HuffmanNode();
-                huffynode.value = i.Value;
-                huffynode.character = i.Key;
-                priorityQueue.Enqueue(huffynode,huffynode.value);
+                var huffNode = new HuffmanNode();
+                huffNode.value = i.Value;
+                huffNode.character = i.Key;
+                priorityQueue.Enqueue(huffNode,huffNode.value);
             }
 
             //pop two lowest values or first two in queue
@@ -53,29 +68,143 @@ namespace HuffmanCoding
                 priorityQueue.Enqueue(parentNode, parentNode.value);
             }
 
+            Convert(priorityQueue.Peek(), "");
+
+            string encodedString = "";
+            foreach (char c in text)
+            {
+                encodedString += charToString[c];
+            }
+
+            return encodedString;
+        }
+
+       
+
+        private void Convert(HuffmanNode node, string current)
+        {
+            if (node == null)
+                return;
+
+            if (node.leftChild == null && node.rightChild == null)
+            {
+                charToString[node.character] = current;
+                return;
+            }
+
+            Convert(node.leftChild, current + "0");
+            Convert(node.rightChild, current + "1");
+        }
+
+        public string Decode(string text)
+        {
             
+            string decodedString = "";
+            HuffmanNode current = priorityQueue.Peek();
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (text[i].Equals('0'))
+                {
+                    current = current.leftChild;
+                }
+                else if (text[i].Equals('1'))
+                {
+                    current = current.rightChild;
+                }
 
+                if (current.leftChild == null && current.rightChild == null)
+                {
+                    decodedString += current.character;
+                    current = priorityQueue.Peek();
+                }
+
+            }
+
+            return decodedString;
         }
 
-        private void Search(HuffmanNode root, string current)
+        public byte[] ByteEncode(string text)
         {
-            if (root.leftChild != null)
+            charToByte.Clear();
+            code = new List<byte>();
+            Encode(text);
+
+
+            foreach (var pair in charToString)
             {
-                Search(root.leftChild,current+="0");
+                byte value = 0;
+                int index = 0;
+                string binaryString = pair.Value;
+
+                // Read backwards to get least significant bit first
+                for (int i = binaryString.Length - 1; i >= 0; i--)
+                {
+                    if (binaryString[i] == '1')
+                    {
+                        value |= (byte)(1 << (binaryString.Length - 1- index));
+                    }
+                    index++;
+                }
+
+                charToByte[pair.Key] = value;
             }
-            if (root.rightChild != null)
+
+            byte val = 0;
+            int bitIndex = 0;
+            byte currentByte = 0;
+            foreach (char c in text)
             {
-                Search(root.rightChild,current+="1");
+              
+                string binaryString = charToString[c];
+
+                foreach(char bit in binaryString)
+                {   
+                    if(bit == '1')
+                    {
+                        currentByte |= (byte)(1 << bitIndex);
+                    }
+
+                    bitIndex++;
+
+                    if (bitIndex == 8 || bitIndex == binaryString.Length)
+                    {
+                        code.Add(currentByte);
+                        currentByte = 0;
+                        bitIndex = 0;
+                    }
+
+                }
+
+
             }
-            else
+
+            if (bitIndex > 0)
             {
-                charConverter.Add(root.character, current);
+                code.Add(currentByte);
             }
+
+            return code.ToArray();
         }
 
-        /*public string Decode(string text)
+        public string ByteDecode(byte[] code)
         {
+            byteToChar.Clear();
+            string text = "";
 
-        }*/
+
+            foreach (var pair in charToByte)
+            {
+                byteToChar[pair.Value] = pair.Key;
+            }
+
+            foreach (byte val in code)
+            {
+                if (byteToChar.TryGetValue(val, out char character))
+                {
+                    text += character;
+                }
+            }
+            return text;
+        }
     }
 }

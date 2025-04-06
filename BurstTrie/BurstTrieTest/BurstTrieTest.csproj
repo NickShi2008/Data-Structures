@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\HuffanCoding\HuffmanCoding.csproj" />
+    <ProjectReference Include="..\BurstTrie\BurstTries.csproj" />
   </ItemGroup>
 
   <ItemGroup>
