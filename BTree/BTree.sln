@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35828.75 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BTreeProj", "BTreeProj.csproj", "{97933D9B-26D0-42FA-B282-2E194EE0F7DD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BTreeTester", "..\BTreeTester\BTreeTester.csproj", "{C214A510-C92A-4128-85EF-3C532ACB809A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{97933D9B-26D0-42FA-B282-2E194EE0F7DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{97933D9B-26D0-42FA-B282-2E194EE0F7DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{97933D9B-26D0-42FA-B282-2E194EE0F7DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{97933D9B-26D0-42FA-B282-2E194EE0F7DD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C214A510-C92A-4128-85EF-3C532ACB809A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C214A510-C92A-4128-85EF-3C532ACB809A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C214A510-C92A-4128-85EF-3C532ACB809A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C214A510-C92A-4128-85EF-3C532ACB809A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {40A8E3FC-E83E-4BDE-B060-43289DBCE05A}
+	EndGlobalSection
+EndGlobal
