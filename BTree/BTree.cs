@@ -222,6 +222,88 @@ namespace BTreeProj
 
             return node;
         }
+
+        //removed redudant Find Split, just check if root to large as split can occur within add
+        //now only other case comes from rootCount
+  
+        public void BetterAdd(T key)
+        {
+            if(Root.Keys.Count == 3)
+            {
+
+                //need place holder so Split works for all cases and allows middle to parent
+                BTreeNode<T> placeHolder = new BTreeNode<T>();
+                placeHolder.Children.Add(Root);
+
+                Split(placeHolder, 0);
+                Root = placeHolder;
+
+            }
+
+            BetterAddHelper(key, Root);
+            Count++;
+        }
+
+        //Now compares the value to find path instead of overused boolean checks
+        //however if the node is about to pass to children with max space, the split will run
+        //runs till leaf reached
+        public void BetterAddHelper(T key, BTreeNode<T> current)
+        {
+            int i = 0;
+            while (i < current.Keys.Count && key.CompareTo(current.Keys[i]) > 0)
+            {
+                i++;
+            }
+            //recursive end check for leaf 
+            if (current.Children.Count == 0)
+            {
+
+                current.Keys.Insert(i, key);
+            }
+            else
+            {
+                //before passing to node check if amount to large, removes problem with re checking parent
+                //since we will go to children as soon as function happens
+                if (current.Children[i].Keys.Count == 3)
+                {
+                    Split(current, i);
+                    if (key.CompareTo(current.Keys[i]) > 0)
+                    {
+                        i++;
+                    }
+                }
+                BetterAddHelper(key,current.Children[i]);
+            }
+        }
+
+        //no need for splitfind and just made split function to reduce redundacy
+        //intakes parent that has child too large along with what index the child is in
+        //seperate right then remove from range
+        //check for new child node if they have children then it must be max size
+        //due to split cases and pass in incase of root, child must have either 0 or 4 children
+        //if 4 and parent 3 then tree goes 1 -2 with 2 children on each which is what check does
+        //then insert the middle as top parent which either is 0 or right after key is greater than other key
+        //now add parent right to child, can't do before due to check which interrupts child.children
+        public void Split(BTreeNode<T> parent, int index)
+        {
+            BTreeNode<T> child = parent.Children[index];
+
+            BTreeNode<T> right = new BTreeNode<T>();
+            right.Keys.Add(child.Keys[2]);
+            T middle = child.Keys[1];
+            child.Keys.RemoveRange(1, 2);
+            if (child.Children.Count > 0)
+            {
+                right.Children.Add(child.Children[2]);
+                right.Children.Add(child.Children[3]);
+                child.Children.RemoveRange(2, 2);
+            }
+
+            parent.Keys.Insert(index, middle);
+            
+            parent.Children.Insert(index + 1, right);
+
+        }
     }
 
 
