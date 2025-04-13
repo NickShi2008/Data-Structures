@@ -16,7 +16,7 @@ namespace BTreeProj
         {
             Count = 0;
             Root = new BTreeNode<T>();
-        }
+        }   
 
         public BTreeNode<T> Search(T key)
         {
@@ -27,7 +27,7 @@ namespace BTreeProj
         {
             BTreeNode<T> node = new BTreeNode<T>();
             int i = 0;
-            while (i < current.Keys.Count && key.CompareTo(current.Keys[i]) < 0)
+            while (i < current.Keys.Count && key.CompareTo(current.Keys[i]) > 0)
             {
                 i++;
             }
@@ -107,8 +107,25 @@ namespace BTreeProj
                             }
                         }
                     }
-
-                    SplitNode = SplitFinder(key, current);
+                    if (current.Children.Count != 0)
+                    {
+                        int c = 0;
+                        while ( c < current.Children.Count)
+                        {
+                            if (key.CompareTo(current.Children[c].Keys[current.Children[c].Keys.Count - 1]) < 0)
+                            {
+                                SplitNode = SplitFinder(key, current.Children[c]);
+                                break;
+                            }
+                            else
+                            {
+                                SplitNode = null;
+                                c++;
+                            }
+                                
+                        }
+                        
+                    }
                 }
                 else
                 {
@@ -206,4 +223,6 @@ namespace BTreeProj
             return node;
         }
     }
+
+
 }

@@ -17,6 +17,7 @@ namespace BTreeTester
             Assert.Contains(50, tree.Root.Keys);
             //Assert.Contains(20, tree.Root.Keys);
             //Assert.Contains(6, tree.Root.Keys);
+            BTreeNode<int> check = tree.Search(76);
 
         }
 
