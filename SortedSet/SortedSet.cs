@@ -15,12 +15,11 @@ namespace SortedSet
 
         private RedBlackTree<T> Tree { get; set; }
 
-        public int Count { get; private set; }
+        public int Count => Tree.Count;
 
-        public SortedSet(IComparer<T>? comparer = null) 
+        public SortedSet(IComparer<T>? comparer = null)
         {
             Comparer = comparer ?? Comparer<T>.Default;
-            Count = 0;
             Tree = new RedBlackTree<T>(comparer);
         }
 
@@ -36,7 +35,7 @@ namespace SortedSet
                 Add(item);
             }
         }
-
+        //could do ceiling and floor with new made in order traversal
         public T Ceiling(T item)
         {
             if (Tree.Count == 0) throw new InvalidOperationException();
@@ -46,24 +45,27 @@ namespace SortedSet
 
         private T CeilingHelper(Node<T> node, T item, T ceiling)
         {
-            if (Comparer.Compare(node.Value, item) > 0 && Comparer.Compare(node.Value, item) < 0)
+            if (node != null && Comparer.Compare(node.Value, item) > 0 && Comparer.Compare(node.Value, ceiling) < 0)
             {
                 ceiling = node.Value;
             }
-
-            if (node == null && Comparer.Compare(node.Value, item) < 0) throw new InvalidOperationException();
-            else if (node == null && Comparer.Compare(node.Value, item) > 0) return ceiling;
-
-
-            if (Comparer.Compare(Tree.Root.Value, item) > 0)
+            else if (node == null)
             {
-                return CeilingHelper(node.RightChild, item, ceiling);
+                if (Comparer.Compare(ceiling, item) < 0) throw new InvalidOperationException();
+                else return ceiling;
             }
-            else
+
+
+            if (Comparer.Compare(node.Value, item) > 0)
             {
                 return CeilingHelper(node.LeftChild, item, ceiling);
             }
+            else
+            {
+                return CeilingHelper(node.RightChild, item, ceiling);
+            }
         }
+
 
         public void Clear()
         {
@@ -84,38 +86,69 @@ namespace SortedSet
 
         private T FloorHelper(Node<T> node, T item, T floor)
         {
-            if (Comparer.Compare(node.Value, item) < 0 && Comparer.Compare(node.Value, item) > 0)
+            if (node != null && Comparer.Compare(node.Value, item) < 0)
             {
-                floor = node.Value;
+                if (Comparer.Compare(floor, item) < 0)
+                {
+                    if (Comparer.Compare(node.Value, floor) > 0)
+                    {
+                        floor = node.Value;
+                    }
+                }
+                else
+                {
+                    floor = node.Value;
+                }
+
+            }
+            else if (node == null)
+            {
+                if (Comparer.Compare(floor, item) > 0) throw new InvalidOperationException();
+                else return floor;
             }
 
-            if (node == null && Comparer.Compare(node.Value, item) > 0) throw new InvalidOperationException();
-            else if (node == null && Comparer.Compare(node.Value, item) < 0) return floor;
 
-
-            if (Comparer.Compare(Tree.Root.Value, item) > 0)
+            if (Comparer.Compare(node.Value, item) > 0)
             {
-                return CeilingHelper(node.RightChild, item, floor);
+
+                return FloorHelper(node.LeftChild, item, floor);
             }
             else
             {
-                return CeilingHelper(node.LeftChild, item, floor);
+                return FloorHelper(node.RightChild, item, floor);
             }
         }
 
         public IEnumerator<T> GetEnumerator()
         {
-            throw new NotImplementedException();
+            Stack<T> stack = new Stack<T>();
+            List<T> nodes = new List<T>();
+            List<T> list = Tree.InOrderTraversal(Tree.Root, stack, nodes);
+
+            foreach (T val in list)
+            {
+                yield return val;
+            }
         }
 
+        //returns new sorted set that has same value between to sets
         public ISortedSet<T> Intersection(ISortedSet<T> other)
         {
-            throw new NotImplementedException();
+            SortedSet<T> set = new SortedSet<T>(Comparer);
+            foreach (T t in other)
+            {
+                if (this.Contains(t))
+                {
+                    set.Add(t);
+                }
+            }
+
+            return set;
         }
 
         public T Max()
         {
-           return Tree.Maximum(Tree.Root).Value;
+            return Tree.Maximum(Tree.Root).Value;
         }
 
         public T Min()
@@ -127,10 +160,26 @@ namespace SortedSet
         {
             return Tree.Remove(item);
         }
-
+        //returns both the sets together without duplicates
         public ISortedSet<T> Union(ISortedSet<T> other)
         {
-            throw new NotImplementedException();
+            SortedSet<T> set = new SortedSet<T>(Comparer);
+            foreach (T t in this)
+            {
+
+                set.Add(t);
+
+            }
+            foreach (T t in other)
+            {
+                if (!this.Contains(t))
+                {
+                    set.Add(t);
+                }
+            }
+
+
+            return set;
         }
 
         IEnumerator IEnumerable.GetEnumerator()

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design.Serialization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -249,22 +250,22 @@ namespace SortedSet
 
         public bool Contains(Node<T> node, T value)
         {
-            if (Comparer.Compare(node.Value, value) == 0)
-            {
-                return true;
-            }
-            else if(node == null)
+            if (node == null)
             {
                 return false;
+            }
+            else if (Comparer.Compare(node.Value, value) == 0)
+            {
+                return true;
             }
 
             if (Comparer.Compare(node.Value, value) < 0)
             {
-                return Contains(node.LeftChild, value);
+                return Contains(node.RightChild, value);
             }
             else
             {
-                return Contains(node.RightChild, value);
+                return Contains(node.LeftChild, value);
             }
         }
 
@@ -281,6 +282,25 @@ namespace SortedSet
         public void Clear()
         {
             Root = null;
+            Count = 0;
+        }
+
+        public List<T> InOrderTraversal(Node<T> node, Stack<T> leftOvers, List<T> order)
+        {
+
+            if (node == null)
+            {
+                return null;
+            }
+                
+            leftOvers.Push(node.Value);
+            InOrderTraversal(node.LeftChild, leftOvers, order);
+            order.Add(leftOvers.Pop());
+            
+            InOrderTraversal(node.RightChild, leftOvers, order);
+           
+
+            return order;
         }
 
     }
