@@ -40,7 +40,7 @@ namespace BootlegSimCity
         }
         public void Draw(SpriteBatch sb, Point size)
         {
-            sb.FillRectangle(new Rectangle(Location, size), Color.Black);
+            sb.FillRectangle(new Rectangle(Location, size), Color.LightSlateGray);
         }
     }
     public class HouseSquare : ISquare
@@ -62,7 +62,7 @@ namespace BootlegSimCity
 
         public void Draw(SpriteBatch sb, Point size)
         {
-            sb.FillRectangle(new Rectangle(Location, size), Color.SlateGray);
+            sb.FillRectangle(new Rectangle(Location, size), Color.SandyBrown);
         }
     }
 
@@ -84,7 +84,7 @@ namespace BootlegSimCity
         }
         public void Draw(SpriteBatch sb, Point size)
         {
-            sb.FillRectangle(new Rectangle(Location, size), Color.Black);
+            sb.FillRectangle(new Rectangle(Location, size), Color.Red);
         }
     }
 }

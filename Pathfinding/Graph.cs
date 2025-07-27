@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+
 namespace Pathfinding
 {
     public class Graph<T>
@@ -44,18 +45,15 @@ namespace Pathfinding
                     continue;
                 visitedVertices.Add(vertex);
 
-                foreach (ISquare neigh in vertex.Neighbors)
+                foreach (var neigh in vertex.Neighbors)
                 {
-                    if (neigh is RoadSquare)
-                    {
-                        float finalDistance = totalDistances[vertex] + neigh.Distance + heuristic(neigh.EndingPoint, end);
+                    float finalDistance = totalDistances[vertex] + neigh.Distance + heuristic(neigh.EndingPoint, end);
 
-                        if (finalDistance < totalDistances[neigh.EndingPoint])
-                        {
-                            totalDistances[neigh.EndingPoint] = finalDistance;
-                            map[neigh.EndingPoint] = (neigh.StartingPoint, neigh.Distance);
-                            queuedDistances.Enqueue(neigh.EndingPoint, finalDistance);
-                        }
+                    if (finalDistance < totalDistances[neigh.EndingPoint])
+                    {
+                        totalDistances[neigh.EndingPoint] = finalDistance;
+                        map[neigh.EndingPoint] = (neigh.StartingPoint, neigh.Distance);
+                        queuedDistances.Enqueue(neigh.EndingPoint, finalDistance);
                     }
                 }
 

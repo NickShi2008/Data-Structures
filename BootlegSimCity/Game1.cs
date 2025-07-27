@@ -1,10 +1,10 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using MonoGame.Extended.Content.Tiled;
 using Pathfinding;
 using System;
 using System.Collections.Generic;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace BootlegSimCity
 {
@@ -23,7 +23,9 @@ namespace BootlegSimCity
         private List<(ISquare, Vertex<Point>)> animateSquares;
         private int count = 0;
         private bool hasReset = true;
-
+        const double SCREENSIZE = 1000;
+        private SelectScreen selectScreen;
+        SpriteFont spriteFont;
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
@@ -34,9 +36,8 @@ namespace BootlegSimCity
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-            graphics.PreferredBackBufferHeight = 1000;
-            graphics.PreferredBackBufferWidth = 1000;
-
+            graphics.PreferredBackBufferHeight = (int)SCREENSIZE;
+            graphics.PreferredBackBufferWidth = (int)(SCREENSIZE*1.2);
             graphics.ApplyChanges();
             base.Initialize();
         }
@@ -46,11 +47,13 @@ namespace BootlegSimCity
             spriteBatch = new SpriteBatch(GraphicsDevice);
             double screenWidth = graphics.PreferredBackBufferWidth;
             double screenHeight = graphics.PreferredBackBufferHeight;
-
+            selectScreen = new SelectScreen((int) SCREENSIZE);
 
             animateSquares = new List<(ISquare, Vertex<Point>)>();
             graph = new Graph<Point>();
-            grid = new Grid<Point>(20, graphics);
+            grid = new Grid<Point>(20, (int) SCREENSIZE);
+            spriteFont = Content.Load<SpriteFont>("Ubuntu32");
+
             // TODO: use this.Content to load your game content here
         }
 
@@ -61,26 +64,32 @@ namespace BootlegSimCity
 
             // TODO: Add your update logic here
             ConnectGrid();
-
-            (List<Vertex<Point>>, float) tracker = graph.ASTAR(FindHouse(), FindHouse(), Manhattan);
-
-            foreach (Vertex<Point> vertex in tracker.Item1)
+         
+            Vertex<Point> houseOne = FindHouse();
+            Vertex<Point> houseTwo = FindHouse(houseOne);
+            (List<Vertex<Point>>, float) tracker;
+            if (houseOne != null && houseTwo != null)
             {
-                for (int i = 0; i < graph.VertexCount; i++)
+                tracker = graph.ASTAR(houseOne, houseTwo, Manhattan);
+
+                foreach (Vertex<Point> vertex in tracker.Item1)
                 {
-                    if (vertex.Equals(graph.Vertices[i]))
+                    for (int i = 0; i < graph.VertexCount; i++)
                     {
+                        if (vertex.Equals(graph.Vertices[i]))
+                        {
 
-                        int x = i / 20;
-                        int y = i % 20;
+                            int x = i / 20;
+                            int y = i % 20;
 
-                        animateSquares.Add((grid.Squares[x, y], graph.Vertices[i]));
+                            animateSquares.Add((grid.Squares[x, y], graph.Vertices[i]));
+                        }
                     }
                 }
             }
-
-
-            AnimatePath(gameTime);
+            KeyboardState keyboardState = Keyboard.GetState();
+            if ((keyboardState.IsKeyDown(Keys.Enter)))
+                AnimateSquare(gameTime);
 
             ms = Mouse.GetState();
 
@@ -93,17 +102,16 @@ namespace BootlegSimCity
 
 
             if (ms.LeftButton == ButtonState.Pressed && (lastMouseState.LeftButton == ButtonState.Released || grid.EnableDrag)
-                && ms.X > 0 && ms.X < graphics.PreferredBackBufferWidth && ms.Y > 0 && ms.Y < graphics.PreferredBackBufferHeight)
+                && ms.X > 0 && ms.X < SCREENSIZE && ms.Y > 0 && ms.Y < SCREENSIZE)
             {
-                if (!grid.hasStored)
-                {
-                    grid.StoreMouseClick(ms.X, ms.Y);
-                }
-                else
-                {
-                    grid.PlaceSquare(ms.X, ms.Y);
-                }
-
+               //   if (!grid.hasStored)
+                //  {
+                      grid.StoreClick(ms.X, ms.Y);
+                 // }
+                 /* else
+                  {
+                      grid.PlaceSquare(ms.X, ms.Y);
+                  }*/
 
             }
             // TODO: Add your update logic here
@@ -120,6 +128,7 @@ namespace BootlegSimCity
 
             grid.DrawGrid(spriteBatch);
 
+            selectScreen.DrawSelectScreen(spriteBatch, graphics);
 
             // spriteBatch.FillRectangle(buttonRectangle, Color.MediumSlateBlue);
 
@@ -151,8 +160,7 @@ namespace BootlegSimCity
             {
                 for (int j = 0; j < grid.Squares.GetLength(1); j++)
                 {
-                    HouseSquare block = new HouseSquare(0, 0);
-                    if (block.GetType() == grid.Squares[i, j].GetType())
+                    if (grid.Squares[i, j] is EmptySquare || grid.Squares[i,j] is HouseSquare)
                     {
                         continue;
                     }
@@ -177,8 +185,7 @@ namespace BootlegSimCity
 
                     foreach (var neigh in Neighbors)
                     {
-
-                        if (grid.Squares[neigh.X, neigh.Y].GetType != block.GetType)
+                        if (grid.Squares[neigh.X, neigh.Y] is RoadSquare || grid.Squares[neigh.X, neigh.Y] is RoadSquare)
                         {
                             var neighborVertex = graph.Search(neigh);
                             graph.AddEdge(currentVertex, neighborVertex, 1); // Distance between box is 1
@@ -188,20 +195,19 @@ namespace BootlegSimCity
             }
         }
 
-        Vertex<Point> FindHouse(Vertex<Point> vertex)
+        Vertex<Point> FindHouse(Vertex<Point> stored = null)
         {
             for (int i = 0; i < grid.Squares.GetLength(0); i++)
             {
                 for (int j = 0; j < grid.Squares.GetLength(1); j++)
                 {
-                    HouseSquare start = new HouseSquare(i, j);
-                    if (grid.Squares[i, j].GetType() == start.GetType())
+                    if (grid.Squares[i, j] is HouseSquare && grid.Squares[i,j] != stored)
                     {
-                        foreach (Vertex<Point> vertex in graph.Vertices)
+                        foreach (Vertex<Point> ver in graph.Vertices)
                         {
-                            if (vertex.Value.X == i && vertex.Value.Y == j)
+                            if (ver.Value.X == i && ver.Value.Y == j)
                             {
-                                return vertex;
+                                return ver;
                             }
                         }
                     }
@@ -210,7 +216,26 @@ namespace BootlegSimCity
             return null;
         }
 
-        Vertex<Point> ChangeToRoad(Vertex<Point> vertex)
+        void ChangeToCar(Vertex<Point> vertex)
+        {
+            for (int i = 0; i < grid.Squares.GetLength(0); i++)
+            {
+                for (int j = 0; j < grid.Squares.GetLength(1); j++)
+                {
+                    for (int k = 0; k < animateSquares.Count; k++)
+                    {
+                        if (grid.Squares[i, j].Equals(animateSquares[k].Item1)
+                            && animateSquares[k].Item2.Equals(vertex))
+                        {
+                            Point store = grid.Squares[i, j].Location;
+                            grid.Squares[i, j] = new CarSquare(store.X, store.Y);
+                        }
+                    }
+                }
+            }
+        }
+
+        void ChangeToRoad(Vertex<Point> vertex)
         {
             for (int i = 0; i < grid.Squares.GetLength(0); i++)
             {
@@ -239,12 +264,13 @@ namespace BootlegSimCity
             return D * (dx + dy);
         }
 
-        void AnimatePath(GameTime gameTime)
+        void AnimateSquare(GameTime gameTime)
         {
             timer += (float)gameTime.ElapsedGameTime.TotalSeconds * 10;
             if (timer > timerDelay && animateSquares.Count - 1 > count)
             {
-                ChangeToRoad(animateSquares[count].Item2);
+                if (count != 0) ChangeToRoad(animateSquares[count - 1].Item2);
+                ChangeToCar(animateSquares[count].Item2);
                 count++;
                 timer = 0;
             }

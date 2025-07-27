@@ -21,21 +21,22 @@ namespace BootlegSimCity
 
         public bool EnableDrag = false;
 
+        //Factory fun
         private static Dictionary<Type, Func<int, int, ISquare>> GetSquare = new Dictionary<Type, Func<int, int, ISquare>>
         {
-            [typeof(EmptySquare)] = (x, y) => new EmptySquare(x,y),
-            [typeof(RoadSquare)] = (x,y) => new RoadSquare(x,y),
-            [typeof(HouseSquare)] = (x, y) => new HouseSquare(x, y),
+            [typeof(EmptySquare)] = (x, y) => new RoadSquare(x,y),
+            [typeof(RoadSquare)] = (x,y) => new EmptySquare(x,y),
+            [typeof(HouseSquare)] = (x, y) => new EmptySquare(x, y),
         };
         //static ISquare Funcy(int x,int y)
         //{
         //    return new EmptySquare(x, y);
         //}
 
-        public Grid(int lines, GraphicsDeviceManager graphics)
+        public Grid(int lines, int SCREENSIZE)
         {
             NumOfLines = lines;
-            Size = graphics.PreferredBackBufferWidth / lines;
+            Size = SCREENSIZE / lines;
             Squares = new ISquare[lines, lines];
             InitGrid();
         }
@@ -53,7 +54,7 @@ namespace BootlegSimCity
 
         public void DrawGrid(SpriteBatch sb)
         {
-            foreach (var square in Squares)
+            foreach (ISquare square in Squares)
             {
                 square.Draw(sb, new Point(Size - 1));
             }
@@ -67,21 +68,21 @@ namespace BootlegSimCity
             RoadSquare block = new RoadSquare(0, 0);
             EnableDrag = true;
 
-            if (SquareClicked != null)
+            if (SquareClicked == null)
             {
-                PlaceSquare(x, y);
-                return;
+                SquareClicked = new RoadSquare(x/Size, y/Size);
             }
 
-            SquareClicked = GetSquare[(Type)Squares[StoredPoint.X, StoredPoint.Y]].Invoke(StoredPoint.X, StoredPoint.Y);
+            SquareClicked = GetSquare[Squares[StoredPoint.X, StoredPoint.Y].GetType()].Invoke(StoredPoint.X, StoredPoint.Y);
             hasStored = true;
-
+            
+            PlaceSquare(x, y);
+            
             if (hasStored)
             {
                 EnableDrag = false;
             }
 
-            
         }
 
         public void PlaceSquare(int x, int y)
@@ -91,7 +92,7 @@ namespace BootlegSimCity
             Point store = Squares[point.X, point.Y].Location;
             ISquare square = Squares[point.X, point.Y];
 
-            if (SquareClicked.Location != Squares[point.X, point.Y].Location)
+            if (SquareClicked.Location != Squares[point.X, point.Y].Location/new Point(Size,Size))
             {
                 Squares[StoredPoint.X, StoredPoint.Y] = square;
                 Squares[StoredPoint.X, StoredPoint.Y].Location = SquareClicked.Location;
