@@ -87,34 +87,17 @@ namespace BootlegSimCity
                     }
                 }
             }
-            KeyboardState keyboardState = Keyboard.GetState();
-            if ((keyboardState.IsKeyDown(Keys.Enter)))
-                AnimateSquare(gameTime);
+            MouseState ms = Mouse.GetState();
 
-            ms = Mouse.GetState();
-
-            if (ms.LeftButton == ButtonState.Pressed)
+            if (ms.LeftButton == ButtonState.Pressed && lastMouseState.LeftButton == ButtonState.Released)
             {
-                int x = ms.X;
-                int y = ms.Y;
+                grid.StoreClick(ms.X, ms.Y);
+            }
+            else if (ms.LeftButton == ButtonState.Released && lastMouseState.LeftButton == ButtonState.Pressed)
+            {
+                grid.PlaceSquare(ms.X, ms.Y);
             }
 
-
-
-            if (ms.LeftButton == ButtonState.Pressed && (lastMouseState.LeftButton == ButtonState.Released || grid.EnableDrag)
-                && ms.X > 0 && ms.X < SCREENSIZE && ms.Y > 0 && ms.Y < SCREENSIZE)
-            {
-               //   if (!grid.hasStored)
-                //  {
-                      grid.StoreClick(ms.X, ms.Y);
-                 // }
-                 /* else
-                  {
-                      grid.PlaceSquare(ms.X, ms.Y);
-                  }*/
-
-            }
-            // TODO: Add your update logic here
             lastMouseState = ms;
 
 

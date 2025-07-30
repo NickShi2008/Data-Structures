@@ -13,13 +13,11 @@ namespace BootlegSimCity
         public ISquare[,] Squares { get; set; }
 
         public int NumOfLines { get; set; }
-        public ISquare SquareClicked { get; set; }
-        public bool hasStored = false;
-        public Point StoredPoint { get; set; }
+        public ISquare CurrentSquare { get; set; }
+        public Point? StoredPoint { get; set; }
 
         private int Size;
 
-        public bool EnableDrag = false;
 
         //Factory fun
         private static Dictionary<Type, Func<int, int, ISquare>> GetSquare = new Dictionary<Type, Func<int, int, ISquare>>
@@ -62,45 +60,33 @@ namespace BootlegSimCity
 
         public void StoreClick(int x, int y)
         {
-            StoredPoint = new Point(x/Size, y/Size);
-
-            EmptySquare empty = new EmptySquare(0, 0);
-            RoadSquare block = new RoadSquare(0, 0);
-            EnableDrag = true;
-
-            if (SquareClicked == null)
+            Point squareClicked = new Point(x / Size, y / Size);
+            if (squareClicked.X >= 0 && squareClicked.X < NumOfLines
+                && squareClicked.Y >= 0 && squareClicked.Y < NumOfLines)
             {
-                SquareClicked = new RoadSquare(x/Size, y/Size);
+                CurrentSquare = Squares[squareClicked.X, squareClicked.Y];
+                StoredPoint = squareClicked;
             }
-
-            SquareClicked = GetSquare[Squares[StoredPoint.X, StoredPoint.Y].GetType()].Invoke(StoredPoint.X, StoredPoint.Y);
-            hasStored = true;
-            
-            PlaceSquare(x, y);
-            
-            if (hasStored)
-            {
-                EnableDrag = false;
-            }
-
         }
 
         public void PlaceSquare(int x, int y)
         {
-            Point point = new Point(x / Size, y / Size);
+            if (CurrentSquare == null || StoredPoint == null)
+                return;
 
-            Point store = Squares[point.X, point.Y].Location;
-            ISquare square = Squares[point.X, point.Y];
-
-            if (SquareClicked.Location != Squares[point.X, point.Y].Location/new Point(Size,Size))
+            Point targetPoint = new Point(x / Size, y / Size);
+            if (targetPoint.X >= 0 && targetPoint.X < NumOfLines && targetPoint.Y >= 0 && targetPoint.Y < NumOfLines)
             {
-                Squares[StoredPoint.X, StoredPoint.Y] = square;
-                Squares[StoredPoint.X, StoredPoint.Y].Location = SquareClicked.Location;
-            }
-            Squares[point.X, point.Y] = SquareClicked;
-            Squares[point.X, point.Y].Location = store;
+                ISquare temp = Squares[targetPoint.X, targetPoint.Y];
+                Squares[targetPoint.X, targetPoint.Y] = CurrentSquare;
+                Squares[StoredPoint.X, StoredPoint.Y] = temp;
 
-            hasStored = false;
+                Squares[targetPoint.X, targetPoint.Y].Location = new Point(targetPoint.X * Size, targetPoint.Y * Size);
+                Squares[StoredPoint.X, StoredPoint.Y].Location = new Point(StoredPoint.X * Size, StoredPoint.Y * Size);
+            }
+
+            CurrentSquare = null;
+            StoredPoint = null;
         }
     }
 }
