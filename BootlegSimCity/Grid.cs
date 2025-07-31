@@ -13,18 +13,19 @@ namespace BootlegSimCity
         public ISquare[,] Squares { get; set; }
 
         public int NumOfLines { get; set; }
-        public ISquare CurrentSquare { get; set; }
-        public Point? StoredPoint { get; set; }
+        public ISquare SquareReplacement { get; set; }
+        public Point? SquareIndex { get; set; }
 
         private int Size;
-
-
+        public bool CanDrag;
         //Factory fun
         private static Dictionary<Type, Func<int, int, ISquare>> GetSquare = new Dictionary<Type, Func<int, int, ISquare>>
         {
-            [typeof(EmptySquare)] = (x, y) => new RoadSquare(x,y),
-            [typeof(RoadSquare)] = (x,y) => new EmptySquare(x,y),
-            [typeof(HouseSquare)] = (x, y) => new EmptySquare(x, y),
+            [typeof(EmptySquare)] = (x, y) => new EmptySquare(x,y),
+            [typeof(SeperationSquare)] = (x,y) => new SeperationSquare(x,y),
+            [typeof(HouseSquare)] = (x, y) => new HouseSquare(x, y),
+            [typeof(RoadSquare)] = (x, y) => new RoadSquare(x, y),
+            [typeof(CarSquare)] = (x, y) => new CarSquare(x, y),
         };
         //static ISquare Funcy(int x,int y)
         //{
@@ -37,6 +38,7 @@ namespace BootlegSimCity
             Size = SCREENSIZE / lines;
             Squares = new ISquare[lines, lines];
             InitGrid();
+            CanDrag = true;
         }
 
         private void InitGrid()
@@ -58,35 +60,61 @@ namespace BootlegSimCity
             }
         }
 
-        public void StoreClick(int x, int y)
+        public void UpdatePossibleSquare(SpriteBatch sb, ISquare square, Point mouse)
         {
-            Point squareClicked = new Point(x / Size, y / Size);
-            if (squareClicked.X >= 0 && squareClicked.X < NumOfLines
-                && squareClicked.Y >= 0 && squareClicked.Y < NumOfLines)
+            int x = mouse.X; 
+            int y = mouse.Y;
+            Point placePoint = new Point(x / Size, y / Size);
+
+            if (isInBounds(placePoint, square))
             {
-                CurrentSquare = Squares[squareClicked.X, squareClicked.Y];
-                StoredPoint = squareClicked;
+                Squares[placePoint.X, placePoint.Y] = GetSquare[square.GetType()].Invoke(placePoint.X * Size, placePoint.Y * Size);
+                if (Squares[placePoint.X, placePoint.Y] is SeperationSquare)
+                {
+                    RoadSquare road = new RoadSquare(0, 0);
+                    PlaceSideSquares(placePoint.X, placePoint.Y, road, true);
+                }
             }
         }
 
-        public void PlaceSquare(int x, int y)
+        public void PlaceSquare(int x, int y, ISquare square)
         {
-            if (CurrentSquare == null || StoredPoint == null)
-                return;
+            Point placePoint = new Point(x / Size, y / Size);
 
-            Point targetPoint = new Point(x / Size, y / Size);
-            if (targetPoint.X >= 0 && targetPoint.X < NumOfLines && targetPoint.Y >= 0 && targetPoint.Y < NumOfLines)
+            if (isInBounds(placePoint, square))
             {
-                ISquare temp = Squares[targetPoint.X, targetPoint.Y];
-                Squares[targetPoint.X, targetPoint.Y] = CurrentSquare;
-                Squares[StoredPoint.X, StoredPoint.Y] = temp;
-
-                Squares[targetPoint.X, targetPoint.Y].Location = new Point(targetPoint.X * Size, targetPoint.Y * Size);
-                Squares[StoredPoint.X, StoredPoint.Y].Location = new Point(StoredPoint.X * Size, StoredPoint.Y * Size);
+                if (placePoint.X == x && placePoint.Y == y && Squares[placePoint.X, placePoint.Y].GetType() == square.GetType())
+                {
+                    CanDrag = false;
+                }
+                else
+                {
+                    Squares[placePoint.X, placePoint.Y] = GetSquare[square.GetType()].Invoke(placePoint.X * Size, placePoint.Y * Size);
+                    if (Squares[placePoint.X, placePoint.Y] is SeperationSquare)
+                    {
+                        RoadSquare road = new RoadSquare(0, 0);
+                        PlaceSideSquares(placePoint.X, placePoint.Y, road, true);
+                    }
+                    CanDrag = true;
+                }
             }
 
-            CurrentSquare = null;
-            StoredPoint = null;
+        }
+
+        private bool isInBounds(Point placePoint, ISquare square)
+        {
+            bool borderCheck = placePoint.X >= 0 && placePoint.X < NumOfLines && placePoint.Y >= 0 && placePoint.Y < NumOfLines;
+            if (square is SeperationSquare)
+            {
+                borderCheck = placePoint.X >= 1 && placePoint.X < NumOfLines - 1 && placePoint.Y >= 1 && placePoint.Y < NumOfLines - 1;
+            }
+            return borderCheck;
+        }
+
+        public void PlaceSideSquares(int x, int y, ISquare square, bool isSideways)
+        {
+             Squares[x, y - 1] = GetSquare[square.GetType()].Invoke(x * Size, (y - 1) * Size);
+             Squares[x, y + 1] = GetSquare[square.GetType()].Invoke(x * Size, (y  + 1) * Size);
         }
     }
 }

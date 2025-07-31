@@ -87,18 +87,21 @@ namespace BootlegSimCity
                     }
                 }
             }
+
+           
+
             MouseState ms = Mouse.GetState();
+            if (ms.LeftButton == ButtonState.Released && lastMouseState.LeftButton == ButtonState.Pressed)
+                selectScreen.FindSelectedSquare(ms.Position);
 
-            if (ms.LeftButton == ButtonState.Pressed && lastMouseState.LeftButton == ButtonState.Released)
+            if (ms.LeftButton == ButtonState.Released && lastMouseState.LeftButton == ButtonState.Pressed 
+                || (grid.CanDrag && lastMouseState.LeftButton == ButtonState.Pressed))
             {
-                grid.StoreClick(ms.X, ms.Y);
-            }
-            else if (ms.LeftButton == ButtonState.Released && lastMouseState.LeftButton == ButtonState.Pressed)
-            {
-                grid.PlaceSquare(ms.X, ms.Y);
+                grid.PlaceSquare(ms.X, ms.Y, selectScreen.GetCurrentSquare());
             }
 
-            lastMouseState = ms;
+                lastMouseState = ms;
+
 
 
             base.Update(gameTime);
@@ -111,9 +114,7 @@ namespace BootlegSimCity
 
             grid.DrawGrid(spriteBatch);
 
-            selectScreen.DrawSelectScreen(spriteBatch, graphics);
-
-            // spriteBatch.FillRectangle(buttonRectangle, Color.MediumSlateBlue);
+            selectScreen.DrawSelectScreen(spriteBatch, graphics, spriteFont);
 
 
             spriteBatch.End();
@@ -184,6 +185,7 @@ namespace BootlegSimCity
             {
                 for (int j = 0; j < grid.Squares.GetLength(1); j++)
                 {
+
                     if (grid.Squares[i, j] is HouseSquare && grid.Squares[i,j] != stored)
                     {
                         foreach (Vertex<Point> ver in graph.Vertices)
