@@ -37,20 +37,20 @@ namespace BootlegSimCity
     {
         public Point Location { get; set; }
         public Color Hue { get; set; }
-        public RoadType RoadType { get; set; }
+        public RoadType roadType { get; set; }
 
         public RoadSquare(int x, int y)
         {
             Location = new Point(x, y);
             Hue = Color.Black;
-            RoadType = RoadType.Horizontal; // default
+            roadType = RoadType.Horizontal;
         }
 
         public RoadSquare(int x, int y, RoadType roadType)
         {
             Location = new Point(x, y);
             Hue = Color.Black;
-            RoadType = roadType;
+            this.roadType = roadType;
         }
 
         public void Draw(SpriteBatch sb, Point size)
@@ -70,6 +70,7 @@ namespace BootlegSimCity
             Location = new Point(x, y);
             Hue = Color.Yellow;
         }
+
         public void Draw(SpriteBatch sb, Point size)
         {
             sb.FillRectangle(new Rectangle(Location, size), Hue);

@@ -24,7 +24,7 @@ namespace BootlegSimCity
         public SelectScreen(int x) 
         {
             start = new Point(x, 0);
-            boxSize = 150;
+            boxSize = 80;
             boxSpacing = 60;
     
             drawSquares = new List<ISquare>

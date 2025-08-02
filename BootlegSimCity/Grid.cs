@@ -14,8 +14,7 @@ namespace BootlegSimCity
 
         public int NumOfLines { get; set; }
         private int SquaresInRow { get; set; }
-        public ISquare SquareReplacement { get; set; }
-        public Point? SquareIndex { get; set; }
+
         public List<Point> directions = new List<Point>
             {
                 new Point(-1, 0),
@@ -23,6 +22,7 @@ namespace BootlegSimCity
                 new Point(0, -1),
                 new Point(0, 1)
             };
+
         private Dictionary<RoadType, List<Point>> RoadCreator = new()
         {
             [RoadType.Vertical] = new() { new(-1, 0), new(1, 0) },
@@ -36,7 +36,11 @@ namespace BootlegSimCity
             [RoadType.RightJunction] = new() { new(1, 0), new(1, -1), new(-1, -1), new(1, 1), new (-1, 1) },
             [RoadType.LeftJunction] = new() { new(1, 0), new(1, -1), new(-1, -1), new(1, 1), new (-1, 1) },
             [RoadType.CrossSection] = new() { new(-1, -1), new(1, 1), new(1, -1), new(-1, 1) },
+            //[RoadType.Circle] = new() { new(-1, -1), new (-1,0), new(1, 0), new(1, 1), new(1, -1), new(0, -1), new(-1, 1), new(0, 1) },
         };
+
+       
+     
         public int Size;
         public bool CanDrag;
         //Factory fun
@@ -110,15 +114,19 @@ namespace BootlegSimCity
 
             if (up && down && !left && !right) return RoadType.Vertical;
             if (left && right && !up && !down) return RoadType.Horizontal;
-            if (up && right && !down && !left) return RoadType.TopCornerRight;
-            if (up && left && !down && !right) return RoadType.TopCornerLeft;
-            if (down && left && !up && !right) return RoadType.BottomCornerLeft;
-            if (down && right && !up && !left) return RoadType.BottomCornerRight;
+            if (up && right && !down && !left) return RoadType.BottomCornerLeft;
+            if (up && left && !down && !right) return RoadType.BottomCornerRight;
+            if (down && left && !up && !right) return RoadType.TopCornerRight;
+            if (down && right && !up && !left) return RoadType.TopCornerLeft;
             if (left && right && down && !up) return RoadType.UpJunction;
             if (left && right && up && !down) return RoadType.DownJunction;
             if (up && down && right && !left) return RoadType.LeftJunction;
             if (up && down && left && !right) return RoadType.RightJunction;
             if (connections >= 3) return RoadType.CrossSection;
+           // if (connections == 0) return RoadType.Circle;
+
+            if ((up && !down && !left && !right) || (!up && down && !left && !right)) return RoadType.Vertical;
+            if ((left && !right && !up && !down) || (!left && right && !up && !down)) return RoadType.Horizontal;
 
 
             return RoadType.Horizontal;
@@ -126,7 +134,7 @@ namespace BootlegSimCity
         private bool IsRoad(int x, int y)
         {
             if (x < 0 || x >= SquaresInRow || y < 0 || y >= NumOfLines) return false;
-            return Squares[x, y] is RoadSquare || Squares[x, y] is SeperationSquare;
+            return Squares[x, y] is RoadSquare; //|| Squares[x, y] is SeperationSquare;
         }
 
         public void PlaceSquare(int x, int y, ISquare square)
@@ -145,9 +153,9 @@ namespace BootlegSimCity
                     if (square is SeperationSquare)
                     {
                         RoadType roadType = FindRoadType(placePoint.X, placePoint.Y);
-                        UpdateRoads(placePoint.X, placePoint.Y, roadType, placePoint);
+                        UpdateRoads(placePoint.X, placePoint.Y, roadType);
 
-                        UpdateNeighbors(placePoint.X, placePoint.Y, placePoint);
+                       // UpdateNeighbors(placePoint.X, placePoint.Y, placePoint);
                     }
                     else
                     {
@@ -171,7 +179,7 @@ namespace BootlegSimCity
             return borderCheck;
         }
 
-        private void UpdateRoads(int x, int y, RoadType type, Point origin)
+        private void UpdateRoads(int x, int y, RoadType type)
         {
             Squares[x, y] = GetSquare[typeof(SeperationSquare)].Invoke(x * Size, y * Size);
             RoadSquare road = new RoadSquare(0, 0);
@@ -180,8 +188,7 @@ namespace BootlegSimCity
             {
                 int newX = x + point.X;
                 int newY = y + point.Y;
-                if (newX >= 0 && newX < SquaresInRow && newY >= 0 
-                    && newY < NumOfLines)
+                if (newX >= 0 && newX < SquaresInRow && newY >= 0 && newY < NumOfLines)
                 {
                     /*  if (newX == origin.X && newY == origin.Y && Squares[newX, newY] is SeperationSquare)
                       {
@@ -191,38 +198,34 @@ namespace BootlegSimCity
                     {
                         RoadType neighborType = FindRoadType(newX, newY);
                         Squares[newX, newY] = new RoadSquare(newX * Size, newY * Size, neighborType);
+                        
+                        UpdateNeighbors(newX, newY);
                     }
                 }
             }
 
         }
 
-        private void UpdateNeighbors(int x, int y, Point origin)
+        private void UpdateNeighbors(int x, int y)
         {
-            Point[] neighbors = new Point[]
-            {
-                new Point(-1, 0),
-                new Point(1, 0),
-                new Point(0, -1),
-                new Point(0, 1)
-            };
 
-            foreach (Point neigh in neighbors)
+            foreach (Point neigh in directions)
             {
                 int newX = x + neigh.X;
                 int newY = y + neigh.Y;
 
                 if (newX >= 0 && newX < SquaresInRow && newY >= 0 && newY < NumOfLines)
                 {
-                    if (Squares[newX, newY] is RoadSquare && !(Squares[newX, newY] is SeperationSquare))
+                    if (Squares[newX, newY] is SeperationSquare)
                     {
                         RoadType neighborType = FindRoadType(newX, newY);
-                        UpdateRoads(newX, newY, neighborType, origin);
+                        UpdateRoads(newX, newY, neighborType);
                     }
                 }
             }
         }
 
-     
+        
+
     }
 }

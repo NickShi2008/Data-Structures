@@ -22,11 +22,12 @@ namespace BootlegSimCity
         private List<(ISquare, Vertex<Point>)> animateSquares;
         private int count = 0;
         private bool hasReset = true;
-        const double SCREENSIZE = 1200;
+        const double SCREENSIZE = 1000;
         private SelectScreen selectScreen;
         SpriteFont spriteFont;
         private bool hasGridChanged = false;
         private Point? lastPlacedCell = null;
+        private int SquareDistance;
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
@@ -38,7 +39,7 @@ namespace BootlegSimCity
         {
             // TODO: Add your initialization logic here
             graphics.PreferredBackBufferHeight = (int)SCREENSIZE;
-            graphics.PreferredBackBufferWidth = (int)(SCREENSIZE*2);
+            graphics.PreferredBackBufferWidth = (int)(SCREENSIZE*1.2);
             graphics.ApplyChanges();
             base.Initialize();
         }
@@ -48,11 +49,11 @@ namespace BootlegSimCity
             spriteBatch = new SpriteBatch(GraphicsDevice);
             double screenWidth = graphics.PreferredBackBufferWidth;
             double screenHeight = graphics.PreferredBackBufferHeight;
-            selectScreen = new SelectScreen((int) (SCREENSIZE * 1.6));
+            selectScreen = new SelectScreen((int) (SCREENSIZE));
 
             animateSquares = new List<(ISquare, Vertex<Point>)>();
             graph = new Graph<Point>();
-            grid = new Grid<Point>(20, (int) (SCREENSIZE), (int) (screenWidth * 1.2));
+            grid = new Grid<Point>(20, (int) (SCREENSIZE), (int) (SCREENSIZE));
             spriteFont = Content.Load<SpriteFont>("Ubuntu32");
 
             // TODO: use this.Content to load your game content here
@@ -103,7 +104,7 @@ namespace BootlegSimCity
             {
                 Point currentCell = new Point(ms.X / grid.Size, ms.Y / grid.Size);
 
-                if (lastPlacedCell != currentCell)
+                if (lastPlacedCell == null || (lastPlacedCell != currentCell))
                 {
                     grid.PlaceSquare(ms.X, ms.Y, selectScreen.GetCurrentSquare());
                     lastPlacedCell = currentCell;
@@ -112,7 +113,8 @@ namespace BootlegSimCity
             }
             else
             {
-                lastPlacedCell = null;
+               // lastPlacedCell = null;
+                hasGridChanged = false;
             }
 
             lastMouseState = ms;
@@ -151,7 +153,8 @@ namespace BootlegSimCity
                 {
                     var vertex = new Vertex<Point>(new Point(i, j));
 
-                    graph.AddVertex(vertex);
+                    if (grid.Squares[i, j] is RoadSquare)
+                        graph.AddVertex(vertex);
                 }
             }
 
@@ -184,10 +187,11 @@ namespace BootlegSimCity
 
                     foreach (var neigh in Neighbors)
                     {
-                        if (grid.Squares[neigh.X, neigh.Y] is RoadSquare || grid.Squares[neigh.X, neigh.Y] is RoadSquare)
+                        if (grid.Squares[neigh.X, neigh.Y] is RoadSquare rSquare)
                         {
                             var neighborVertex = graph.Search(neigh);
-                            graph.AddEdge(currentVertex, neighborVertex, 1); // Distance between box is 1
+                            ///ConnectRoads(rSquare);
+                            graph.AddEdge(neighborVertex, currentVertex, 1);
                         }
                     }
                 }
@@ -265,6 +269,7 @@ namespace BootlegSimCity
             return D * (dx + dy);
         }
 
+        //cars drive on right side of the road
         void AnimateSquare(GameTime gameTime)
         {
             timer += (float)gameTime.ElapsedGameTime.TotalSeconds * 10;
@@ -280,6 +285,83 @@ namespace BootlegSimCity
                 hasReset = false;
                 isRunning = false;
             }
+        }
+
+        //based on type of roadsquare deteect where seperation square is (know you know orientation)
+        //if roadsquare is on "Right" side connect a->b other wise b->a
+        //ex: horizontal, detect seperation is on left side then right side road, vice versa
+        void ConnectRoads(RoadSquare square)
+        {
+            int x = square.Location.X / grid.Size;
+            int y = square.Location.Y / grid.Size; 
+            Vertex<Point> a = new Vertex<Point>(square.Location);
+            Vertex<Point> b;
+            switch (square.roadType)
+            {
+                case RoadType.Vertical:
+                    
+                    if (grid.Squares[x - 1, y] is SeperationSquare)
+                    {
+                        b = new Vertex<Point> (grid.Squares[x, y - 1].Location);
+                    }
+                    else if(grid.Squares[x + 1, y] is SeperationSquare)
+                    {
+                        b = new Vertex<Point>(grid.Squares[x, y + 1].Location);
+                    }
+                    else
+                    {
+                        b = null;
+                        throw new NullReferenceException();
+                    }
+                    graph.AddEdge(a, b, SquareDistance);
+                    break;
+                case RoadType.Horizontal:
+                    if (grid.Squares[x, y - 1] is SeperationSquare)
+                    {
+                        b = new Vertex<Point>(grid.Squares[x + 1, y].Location);
+                    }
+                    else if (grid.Squares[x,y + 1] is SeperationSquare)
+                    {
+                        b = new Vertex<Point>(grid.Squares[x - 1, y + 1].Location);
+                    }
+                    else
+                    {
+                        b = null;
+                        throw new NullReferenceException();
+                    }
+                    graph.AddEdge(a, b, SquareDistance);
+                    break;
+                case RoadType.TopCornerLeft:
+                    b = new Vertex<Point>(grid.Squares[x, y + 1].Location);
+                    graph.AddEdge(a, b, SquareDistance);
+                    break;
+                case RoadType.TopCornerRight:
+                    b = new Vertex<Point>(grid.Squares[x - 1, y].Location);
+                    graph.AddEdge(a, b, SquareDistance);
+                    break;
+                case RoadType.BottomCornerLeft:
+                    b = new Vertex<Point>(grid.Squares[x + 1, y].Location);
+                    graph.AddEdge(a, b, SquareDistance);
+                    break;
+                case RoadType.BottomCornerRight:
+                    b = new Vertex<Point>(grid.Squares[x, y - 1].Location);
+                    graph.AddEdge(a, b, SquareDistance);
+                    break;
+                case RoadType.UpJunction:
+                    b = new Vertex<Point>(grid.Squares[x, y - 1].Location);
+                    graph.AddEdge(a, b, SquareDistance);
+                    break;
+                case RoadType.DownJunction:
+                    break;
+                case RoadType.RightJunction:
+                    break;
+                case RoadType.LeftJunction:
+                    break;
+                case RoadType.CrossSection:
+                    break; ;
+
+            }
+
         }
     }
 }
