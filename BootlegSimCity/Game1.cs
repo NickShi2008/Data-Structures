@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Input;
 using Pathfinding;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace BootlegSimCity
@@ -12,8 +13,6 @@ namespace BootlegSimCity
     {
         private GraphicsDeviceManager graphics;
         private SpriteBatch spriteBatch;
-        private MouseState mouseState;
-        private MouseState ms;
         private Grid<Point> grid;
         private MouseState lastMouseState = new MouseState();
         private Graph<Point> graph;
@@ -23,9 +22,11 @@ namespace BootlegSimCity
         private List<(ISquare, Vertex<Point>)> animateSquares;
         private int count = 0;
         private bool hasReset = true;
-        const double SCREENSIZE = 1000;
+        const double SCREENSIZE = 1200;
         private SelectScreen selectScreen;
         SpriteFont spriteFont;
+        private bool hasGridChanged = false;
+        private Point? lastPlacedCell = null;
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
@@ -37,7 +38,7 @@ namespace BootlegSimCity
         {
             // TODO: Add your initialization logic here
             graphics.PreferredBackBufferHeight = (int)SCREENSIZE;
-            graphics.PreferredBackBufferWidth = (int)(SCREENSIZE*1.2);
+            graphics.PreferredBackBufferWidth = (int)(SCREENSIZE*2);
             graphics.ApplyChanges();
             base.Initialize();
         }
@@ -47,11 +48,11 @@ namespace BootlegSimCity
             spriteBatch = new SpriteBatch(GraphicsDevice);
             double screenWidth = graphics.PreferredBackBufferWidth;
             double screenHeight = graphics.PreferredBackBufferHeight;
-            selectScreen = new SelectScreen((int) SCREENSIZE);
+            selectScreen = new SelectScreen((int) (SCREENSIZE * 1.6));
 
             animateSquares = new List<(ISquare, Vertex<Point>)>();
             graph = new Graph<Point>();
-            grid = new Grid<Point>(20, (int) SCREENSIZE);
+            grid = new Grid<Point>(20, (int) (SCREENSIZE), (int) (screenWidth * 1.2));
             spriteFont = Content.Load<SpriteFont>("Ubuntu32");
 
             // TODO: use this.Content to load your game content here
@@ -63,15 +64,18 @@ namespace BootlegSimCity
                 Exit();
 
             // TODO: Add your update logic here
-            ConnectGrid();
-         
+            if(hasGridChanged)
+            {
+                ConnectGrid();
+            }
+                
             Vertex<Point> houseOne = FindHouse();
             Vertex<Point> houseTwo = FindHouse(houseOne);
             (List<Vertex<Point>>, float) tracker;
             if (houseOne != null && houseTwo != null)
             {
                 tracker = graph.ASTAR(houseOne, houseTwo, Manhattan);
-
+                animateSquares.Clear();
                 foreach (Vertex<Point> vertex in tracker.Item1)
                 {
                     for (int i = 0; i < graph.VertexCount; i++)
@@ -86,21 +90,32 @@ namespace BootlegSimCity
                         }
                     }
                 }
+                    
             }
-
            
 
             MouseState ms = Mouse.GetState();
             if (ms.LeftButton == ButtonState.Released && lastMouseState.LeftButton == ButtonState.Pressed)
                 selectScreen.FindSelectedSquare(ms.Position);
 
-            if (ms.LeftButton == ButtonState.Released && lastMouseState.LeftButton == ButtonState.Pressed 
-                || (grid.CanDrag && lastMouseState.LeftButton == ButtonState.Pressed))
+           
+            if (ms.LeftButton == ButtonState.Pressed)
             {
-                grid.PlaceSquare(ms.X, ms.Y, selectScreen.GetCurrentSquare());
+                Point currentCell = new Point(ms.X / grid.Size, ms.Y / grid.Size);
+
+                if (lastPlacedCell != currentCell)
+                {
+                    grid.PlaceSquare(ms.X, ms.Y, selectScreen.GetCurrentSquare());
+                    lastPlacedCell = currentCell;
+                    hasGridChanged = true;
+                }
+            }
+            else
+            {
+                lastPlacedCell = null;
             }
 
-                lastMouseState = ms;
+            lastMouseState = ms;
 
 
 
@@ -238,6 +253,7 @@ namespace BootlegSimCity
                 }
             }
         }
+     
 
 
         public float Manhattan(Vertex<Point> start, Vertex<Point> end)

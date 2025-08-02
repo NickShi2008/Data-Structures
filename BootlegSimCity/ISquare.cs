@@ -15,8 +15,6 @@ namespace BootlegSimCity
         Point Location { get; set; }
         Color Hue { get; set; }
         void Draw(SpriteBatch sb, Point size);
-
-        void DrawTransparent(SpriteBatch sb, Point size);
     }
 
     public class EmptySquare : ISquare
@@ -27,15 +25,11 @@ namespace BootlegSimCity
         public EmptySquare(int x, int y)
         {
             Location = new Point(x, y);
+            Hue = Color.AntiqueWhite;
         }
         public void Draw(SpriteBatch sb, Point size)
         {
-            sb.FillRectangle(new Rectangle(Location, size), Color.AntiqueWhite);
-        }
-
-        public void DrawTransparent(SpriteBatch sb, Point size)
-        {
-            throw new NotImplementedException();
+            sb.FillRectangle(new Rectangle(Location, size), Hue);
         }
     }
 
@@ -43,20 +37,26 @@ namespace BootlegSimCity
     {
         public Point Location { get; set; }
         public Color Hue { get; set; }
+        public RoadType RoadType { get; set; }
+
         public RoadSquare(int x, int y)
         {
             Location = new Point(x, y);
             Hue = Color.Black;
-        }
-        public void Draw(SpriteBatch sb, Point size, bool isPreview)
-        {
-            sb.FillRectangle(new Rectangle(Location, size), Hue);
+            RoadType = RoadType.Horizontal; // default
         }
 
-        public void DrawTransparent(SpriteBatch sb, Point size)
+        public RoadSquare(int x, int y, RoadType roadType)
         {
-            Color adjustedColor = new Color(Hue.R, Hue.G, Hue.B, Hue.A - 100);
-            sb.FillRectangle(new Rectangle(Location, size), adjustedColor);
+            Location = new Point(x, y);
+            Hue = Color.Black;
+            RoadType = roadType;
+        }
+
+        public void Draw(SpriteBatch sb, Point size)
+        {
+            sb.FillRectangle(new Rectangle(Location, size), Hue);
+
         }
     }
 
@@ -65,7 +65,7 @@ namespace BootlegSimCity
         public Point Location { get; set; }
         public Color Hue { get; set; }
 
-        public SeperationSquare(int x, int y, bool isPreview = false)
+        public SeperationSquare(int x, int y)
         {
             Location = new Point(x, y);
             Hue = Color.Yellow;
@@ -73,12 +73,6 @@ namespace BootlegSimCity
         public void Draw(SpriteBatch sb, Point size)
         {
             sb.FillRectangle(new Rectangle(Location, size), Hue);
-        }
-
-        public void DrawTransparent(SpriteBatch sb, Point size)
-        {
-            Color adjustedColor = new Color(Hue.R, Hue.G, Hue.B, Hue.A - 100);
-            sb.FillRectangle(new Rectangle(Location, size), adjustedColor);
         }
     }
 
@@ -105,12 +99,6 @@ namespace BootlegSimCity
         {
             sb.FillRectangle(new Rectangle(Location, size), Hue);
         }
-
-        public void DrawTransparent(SpriteBatch sb, Point size)
-        {
-            Color adjustedColor = new Color(Hue.R, Hue.G, Hue.B, Hue.A - 100);
-            sb.FillRectangle(new Rectangle(Location, size), adjustedColor);
-        }
     }
 
     public class CarSquare : ISquare
@@ -120,13 +108,7 @@ namespace BootlegSimCity
         public Point Destination { get; set; }
         public Color Hue { get; set; }
 
-        enum SquareState
-        {
-            Preview,
-            Placed
-        }
-
-        SquareState squareState = SquareState.Preview;
+       
 
         public CarSquare(int x, int y)
         {
@@ -142,17 +124,7 @@ namespace BootlegSimCity
         }
         public void Draw(SpriteBatch sb, Point size)
         {
-            switch (squareState)
-            {
-                case SquareState.Preview:
-                    //Hue = new Color(Hue.R, Hue.G, Hue.B, );
-                    break;
-                case SquareState.Placed:
-
-                    break;
-                default:
-                    break;
-            }
+            
 
             sb.FillRectangle(new Rectangle(Location, size), Hue);
         }
