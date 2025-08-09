@@ -7,6 +7,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Pathfinding;
 
 namespace BootlegSimCity
 {
@@ -81,19 +82,11 @@ namespace BootlegSimCity
     {
         public Point Location { get; set; }
 
-        List<CarSquare> CarSquares { get; set; }
         public Color Hue { get; set; }
         public HouseSquare(int x, int y, bool isPreview = false)
         {
             Location = new Point(x, y);
-            CarSquares = new List<CarSquare>();
             Hue = Color.SandyBrown;
-        }
-
-        public void AddCar(CarSquare car, List<HouseSquare> houses)
-        {
-            CarSquares.Add(car);
-            car.AssignDestination(houses);
         }
 
         public void Draw(SpriteBatch sb, Point size)
@@ -106,27 +99,21 @@ namespace BootlegSimCity
     {
         public Point Location { get; set; }
 
-        public Point Destination { get; set; }
+        public Point NextSquare { get; set; }
         public Color Hue { get; set; }
 
-       
+        private int Center = 4;
+
+        public PriorityQueue<Vertex<Point>, int> Path { get; set; } = new PriorityQueue<Vertex<Point>, int>();
 
         public CarSquare(int x, int y)
         {
-            Location = new Point(x, y);
+            Location = new Point(x + Center, y + Center);
             Hue = Color.Red;
         }
 
-        public void AssignDestination(List<HouseSquare> houses)
-        {
-            Random random = new Random();
-            int randIndex = random.Next(0, houses.Count);
-            Destination = houses[randIndex].Location;
-        }
         public void Draw(SpriteBatch sb, Point size)
         {
-            
-
             sb.FillRectangle(new Rectangle(Location, size), Hue);
         }
 

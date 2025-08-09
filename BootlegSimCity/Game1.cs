@@ -5,6 +5,7 @@ using Pathfinding;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace BootlegSimCity
@@ -19,7 +20,6 @@ namespace BootlegSimCity
         private bool isRunning = false;
         private float timer = 0;
         private float timerDelay = 0.5f;
-        private List<(ISquare, Vertex<Point>)> animateSquares;
         private int count = 0;
         private bool hasReset = true;
         const double SCREENSIZE = 1000;
@@ -51,9 +51,8 @@ namespace BootlegSimCity
             double screenHeight = graphics.PreferredBackBufferHeight;
             selectScreen = new SelectScreen((int) (SCREENSIZE));
 
-            animateSquares = new List<(ISquare, Vertex<Point>)>();
             graph = new Graph<Point>();
-            grid = new Grid<Point>(20, (int) (SCREENSIZE), (int) (SCREENSIZE));
+            grid = new Grid<Point>(40, (int) (SCREENSIZE), (int) (SCREENSIZE));
             spriteFont = Content.Load<SpriteFont>("Ubuntu32");
 
             // TODO: use this.Content to load your game content here
@@ -69,31 +68,27 @@ namespace BootlegSimCity
             {
                 ConnectGrid();
             }
-                
-            Vertex<Point> houseOne = FindHouse();
-            Vertex<Point> houseTwo = FindHouse(houseOne);
-            (List<Vertex<Point>>, float) tracker;
-            if (houseOne != null && houseTwo != null)
+
+            for(int car = 0; car < grid.Cars.Count; car++)
             {
-                tracker = graph.ASTAR(houseOne, houseTwo, Manhattan);
-                animateSquares.Clear();
-                foreach (Vertex<Point> vertex in tracker.Item1)
+                if (grid.Cars[car].Path.Count <= 0)
                 {
-                    for (int i = 0; i < graph.VertexCount; i++)
+                    Vertex<Point> houseOne = FindHouse();
+                    Vertex<Point> houseTwo = FindHouse(houseOne);
+                    (List<Vertex<Point>>, float) tracker;
+                    if (houseOne != null && houseTwo != null)
                     {
-                        if (vertex.Equals(graph.Vertices[i]))
+                        tracker = graph.ASTAR(houseOne, houseTwo, Manhattan);
+                        for(int i = 0; i < tracker.Item1.Count; i++)
                         {
-
-                            int x = i / 20;
-                            int y = i % 20;
-
-                            animateSquares.Add((grid.Squares[x, y], graph.Vertices[i]));
+                            grid.Cars[car].Path.Enqueue(tracker.Item1[i], i);
                         }
                     }
                 }
-                    
             }
            
+           
+            AnimateCars(gameTime);
 
             MouseState ms = Mouse.GetState();
             if (ms.LeftButton == ButtonState.Released && lastMouseState.LeftButton == ButtonState.Pressed)
@@ -154,7 +149,14 @@ namespace BootlegSimCity
                     var vertex = new Vertex<Point>(new Point(i, j));
 
                     if (grid.Squares[i, j] is RoadSquare)
+                    {
                         graph.AddVertex(vertex);
+                        grid.UpdateNeighbors(i, j);
+                    }
+                    else if (grid.Squares[i, j] is HouseSquare)
+                    {
+                        graph.AddVertex(vertex);
+                    }
                 }
             }
 
@@ -162,7 +164,7 @@ namespace BootlegSimCity
             {
                 for (int j = 0; j < grid.Squares.GetLength(1); j++)
                 {
-                    if (grid.Squares[i, j] is EmptySquare || grid.Squares[i,j] is HouseSquare)
+                    if (!(grid.Squares[i, j] is RoadSquare))
                     {
                         continue;
                     }
@@ -178,8 +180,8 @@ namespace BootlegSimCity
 
                     for (int k = Neighbors.Count - 1; k >= 0; k--)
                     {
-                        if (Neighbors[k].X >= grid.Squares.GetLength(0) || Neighbors[k].X < 0
-                            || Neighbors[k].Y >= grid.Squares.GetLength(1) || Neighbors[k].Y < 0)
+                        if (Neighbors[k].X >= grid.SquaresInRow || Neighbors[k].X <= 0
+                            || Neighbors[k].Y >= grid.NumOfLines || Neighbors[k].Y <= 0)
                         {
                             Neighbors.Remove(Neighbors[k]);
                         }
@@ -190,13 +192,13 @@ namespace BootlegSimCity
                         if (grid.Squares[neigh.X, neigh.Y] is RoadSquare rSquare)
                         {
                             var neighborVertex = graph.Search(neigh);
-                            ///ConnectRoads(rSquare);
-                            graph.AddEdge(neighborVertex, currentVertex, 1);
+                            ConnectRoads(rSquare);
                         }
                     }
                 }
             }
         }
+           
 
         Vertex<Point> FindHouse(Vertex<Point> stored = null)
         {
@@ -204,8 +206,7 @@ namespace BootlegSimCity
             {
                 for (int j = 0; j < grid.Squares.GetLength(1); j++)
                 {
-
-                    if (grid.Squares[i, j] is HouseSquare && grid.Squares[i,j] != stored)
+                    if (grid.Squares[i, j] is HouseSquare house && grid.Squares[i, j] != stored)
                     {
                         foreach (Vertex<Point> ver in graph.Vertices)
                         {
@@ -219,8 +220,9 @@ namespace BootlegSimCity
             }
             return null;
         }
+        
 
-        void ChangeToCar(Vertex<Point> vertex)
+       /* void ChangeToCar(Vertex<Point> vertex)
         {
             for (int i = 0; i < grid.Squares.GetLength(0); i++)
             {
@@ -237,9 +239,9 @@ namespace BootlegSimCity
                     }
                 }
             }
-        }
+        }*/
 
-        void ChangeToRoad(Vertex<Point> vertex)
+      /*  void ChangeToRoad(Vertex<Point> vertex)
         {
             for (int i = 0; i < grid.Squares.GetLength(0); i++)
             {
@@ -256,7 +258,7 @@ namespace BootlegSimCity
                     }
                 }
             }
-        }
+        }*/
      
 
 
@@ -270,20 +272,17 @@ namespace BootlegSimCity
         }
 
         //cars drive on right side of the road
-        void AnimateSquare(GameTime gameTime)
+        void AnimateCars(GameTime gameTime)
         {
             timer += (float)gameTime.ElapsedGameTime.TotalSeconds * 10;
-            if (timer > timerDelay && animateSquares.Count - 1 > count)
+            if (timer > timerDelay)
             {
-                if (count != 0) ChangeToRoad(animateSquares[count - 1].Item2);
-                ChangeToCar(animateSquares[count].Item2);
-                count++;
+                foreach(CarSquare car in grid.Cars)
+                {
+                    if(car.Path.Count > 0)
+                        car.Location = car.Path.Dequeue().Value;
+                }
                 timer = 0;
-            }
-            else if (animateSquares.Count - 1 <= count)
-            {
-                hasReset = false;
-                isRunning = false;
             }
         }
 
@@ -296,6 +295,7 @@ namespace BootlegSimCity
             int y = square.Location.Y / grid.Size; 
             Vertex<Point> a = new Vertex<Point>(square.Location);
             Vertex<Point> b;
+
             switch (square.roadType)
             {
                 case RoadType.Vertical:
@@ -304,7 +304,7 @@ namespace BootlegSimCity
                     {
                         b = new Vertex<Point> (grid.Squares[x, y - 1].Location);
                     }
-                    else if(grid.Squares[x + 1, y] is SeperationSquare)
+                    else if(grid.Squares[x + 1, y] is SeperationSquare )
                     {
                         b = new Vertex<Point>(grid.Squares[x, y + 1].Location);
                     }
@@ -348,16 +348,26 @@ namespace BootlegSimCity
                     graph.AddEdge(a, b, SquareDistance);
                     break;
                 case RoadType.UpJunction:
-                    b = new Vertex<Point>(grid.Squares[x, y - 1].Location);
+                    b = new Vertex<Point>(grid.Squares[x, y + 1].Location);
                     graph.AddEdge(a, b, SquareDistance);
                     break;
                 case RoadType.DownJunction:
+                    b = new Vertex<Point>(grid.Squares[x, y - 1].Location);
+                    graph.AddEdge(a, b, SquareDistance);
                     break;
                 case RoadType.RightJunction:
+                    b = new Vertex<Point>(grid.Squares[x + 1, y].Location);
+                    graph.AddEdge(a, b, SquareDistance);
                     break;
                 case RoadType.LeftJunction:
+                    b = new Vertex<Point>(grid.Squares[x - 1, y].Location);
+                    graph.AddEdge(a, b, SquareDistance);
                     break;
                 case RoadType.CrossSection:
+                    b = new Vertex<Point>(grid.Squares[x - 1, y].Location);
+                    graph.AddEdge(a, b, SquareDistance);
+                    Vertex<Point> c = new Vertex<Point>(grid.Squares[x + 1, y].Location);
+                    graph.AddEdge(a, c, SquareDistance);
                     break; ;
 
             }

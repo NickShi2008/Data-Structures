@@ -11,30 +11,49 @@ namespace BootlegSimCity
     public class Grid<T>
     {
         public ISquare[,] Squares { get; set; }
-
+        public List<CarSquare> Cars { get; set; } = new List<CarSquare>();
+        private HashSet<(int, int)> SquaresChecked { get; set; }
         public int NumOfLines { get; set; }
-        private int SquaresInRow { get; set; }
+        public int SquaresInRow { get; set; }
 
         public List<Point> directions = new List<Point>
             {
-                new Point(-1, 0),
-                new Point(1, 0),
-                new Point(0, -1),
-                new Point(0, 1)
+                left,
+                right,
+                up,
+                down
             };
 
+        public List<Point> Circle = new List<Point>
+            {
+                left,
+                right,
+                up,
+                down,
+                new Point(-1, -1),
+                new Point(1, 1),
+                new Point(1, -1),
+                new Point(-1, 1),
+            };
+
+
+        static Point left = new Point(-1, 0);
+        static Point right = new Point(1, 0);
+        static Point up = new Point(0, -1);
+        static Point down = new Point(0, 1);
         private Dictionary<RoadType, List<Point>> RoadCreator = new()
         {
-            [RoadType.Vertical] = new() { new(-1, 0), new(1, 0) },
-            [RoadType.Horizontal] = new() { new(0, -1), new(0, 1) },
-            [RoadType.TopCornerLeft] = new() { new(0, -1), new(-1, 0), new (-1, -1), new(1, 1) },
-            [RoadType.TopCornerRight] = new() { new(1, 0), new(0, -1), new (1,-1), new (-1, 1) },
-            [RoadType.BottomCornerLeft] = new() { new(0, -1), new(-1, 0), new (-1,-1), new(1, -1) },
-            [RoadType.BottomCornerRight] = new() { new(0, -1), new(1, 0), new(1,-1), new(-1, -1) },
-            [RoadType.UpJunction] = new() { new(-1, -1), new(-1, 1), new(1, -1), new(1, 1), new(0, 1) },
-            [RoadType.DownJunction] = new() { new(-1, 1), new(-1, -1), new(1, 1), new(1, -1), new(0, -1) },
-            [RoadType.RightJunction] = new() { new(1, 0), new(1, -1), new(-1, -1), new(1, 1), new (-1, 1) },
-            [RoadType.LeftJunction] = new() { new(1, 0), new(1, -1), new(-1, -1), new(1, 1), new (-1, 1) },
+            
+            [RoadType.Vertical] = new() { left, right },
+            [RoadType.Horizontal] = new() { up, down },
+            [RoadType.TopCornerLeft] = new() { up, left, new (-1, -1), new(1, 1) },
+            [RoadType.TopCornerRight] = new() { right, up, new (1,-1), new (-1, 1) },
+            [RoadType.BottomCornerLeft] = new() { down, left, new(-1, -1) },
+            [RoadType.BottomCornerRight] = new() { down, right, new(1, -1) },
+            [RoadType.UpJunction] = new() { down, new(-1, -1), new(-1, 1), new(1, -1), new(1, 1) },
+            [RoadType.DownJunction] = new() {up, new(-1, 1), new(-1, -1), new(1, 1), new(1, -1) },
+            [RoadType.RightJunction] = new() { left, new(1, -1), new(-1, -1), new(1, 1), new (-1, 1) },
+            [RoadType.LeftJunction] = new() { right, new(1, -1), new(-1, -1), new(1, 1), new (-1, 1) },
             [RoadType.CrossSection] = new() { new(-1, -1), new(1, 1), new(1, -1), new(-1, 1) },
             //[RoadType.Circle] = new() { new(-1, -1), new (-1,0), new(1, 0), new(1, 1), new(1, -1), new(0, -1), new(-1, 1), new(0, 1) },
         };
@@ -66,6 +85,7 @@ namespace BootlegSimCity
             Squares = new ISquare[SquaresInRow, lines];
             InitGrid();
             CanDrag = true;
+            SquaresChecked = new HashSet<(int, int)>();
         }
 
         private void InitGrid()
@@ -84,6 +104,11 @@ namespace BootlegSimCity
             foreach (ISquare square in Squares)
             {
                 square.Draw(sb, new Point(Size - 1));
+            }
+
+            foreach(CarSquare car in Cars)
+            {
+                car.Draw(sb, new Point(Size - 8));
             }
         }
 
@@ -111,9 +136,6 @@ namespace BootlegSimCity
             bool down = IsRoad(x, y + 1);
 
             int connections = (left ? 1 : 0) + (right ? 1 : 0) + (up ? 1 : 0) + (down ? 1 : 0);
-
-            if (up && down && !left && !right) return RoadType.Vertical;
-            if (left && right && !up && !down) return RoadType.Horizontal;
             if (up && right && !down && !left) return RoadType.BottomCornerLeft;
             if (up && left && !down && !right) return RoadType.BottomCornerRight;
             if (down && left && !up && !right) return RoadType.TopCornerRight;
@@ -123,6 +145,9 @@ namespace BootlegSimCity
             if (up && down && right && !left) return RoadType.LeftJunction;
             if (up && down && left && !right) return RoadType.RightJunction;
             if (connections >= 3) return RoadType.CrossSection;
+            if (up && down && !left && !right) return RoadType.Vertical;
+            if (left && right && !up && !down) return RoadType.Horizontal;
+           
            // if (connections == 0) return RoadType.Circle;
 
             if ((up && !down && !left && !right) || (!up && down && !left && !right)) return RoadType.Vertical;
@@ -155,24 +180,54 @@ namespace BootlegSimCity
                         RoadType roadType = FindRoadType(placePoint.X, placePoint.Y);
                         UpdateRoads(placePoint.X, placePoint.Y, roadType);
 
-                       // UpdateNeighbors(placePoint.X, placePoint.Y, placePoint);
+                        if (!SquaresChecked.Contains((placePoint.X,placePoint.Y)))
+                            UpdateNeighbors(placePoint.X, placePoint.Y);
                     }
-                    else
+                    else if (square is HouseSquare && Squares[placePoint.X,placePoint.Y] is EmptySquare)
+                    {
+                        foreach (Point neigh in directions)
+                        {
+                            int newX = placePoint.X + neigh.X;
+                            int newY = placePoint.Y + neigh.Y;
+
+                            if (Squares[newX,newY] is RoadSquare)
+                            {
+                                Squares[placePoint.X, placePoint.Y] = GetSquare[square.GetType()].Invoke(placePoint.X * Size, placePoint.Y * Size);
+                            }
+                                
+                        }
+                    }
+                    else if (square is CarSquare && Squares[placePoint.X, placePoint.Y] is RoadSquare)
+                    {
+                        foreach (Point neigh in directions)
+                        {
+                            int newX = placePoint.X + neigh.X;
+                            int newY = placePoint.Y + neigh.Y;
+
+                            if (Squares[newX, newY] is HouseSquare)
+                            {
+                                CarSquare car = new CarSquare(placePoint.X * Size, placePoint.Y * Size);
+                                Cars.Add(car);
+                            }
+
+                        }
+                    }
+                    else if(square is EmptySquare)
                     {
                         Squares[placePoint.X, placePoint.Y] = GetSquare[square.GetType()].Invoke(placePoint.X * Size, placePoint.Y * Size);
                     }
 
-                    CanDrag = true;
+                     CanDrag = true;
                 }
             }
 
         }
 
-        private bool IsInBounds(Point point, ISquare square)
+        public bool IsInBounds(Point point, ISquare square)
         {
 
             bool borderCheck = point.X >= 0 && point.X < SquaresInRow && point.Y >= 0 && point.Y < NumOfLines;
-            if (square is SeperationSquare)
+            if (square is SeperationSquare || square is HouseSquare)
             {
                 borderCheck = point.X >= 1 && point.X < SquaresInRow - 1 && point.Y >= 1 && point.Y < NumOfLines - 1;
             }
@@ -182,31 +237,32 @@ namespace BootlegSimCity
         private void UpdateRoads(int x, int y, RoadType type)
         {
             Squares[x, y] = GetSquare[typeof(SeperationSquare)].Invoke(x * Size, y * Size);
+            SquaresChecked.Remove((x, y));
             RoadSquare road = new RoadSquare(0, 0);
-            List<Point> creator = RoadCreator[type];
-            foreach (Point point in creator)
+           // List<Point> creator = RoadCreator[type];
+            foreach (Point point in Circle)
             {
                 int newX = x + point.X;
                 int newY = y + point.Y;
                 if (newX >= 0 && newX < SquaresInRow && newY >= 0 && newY < NumOfLines)
                 {
-                    /*  if (newX == origin.X && newY == origin.Y && Squares[newX, newY] is SeperationSquare)
+                    /*if (newX == origin.X && newY == origin.Y && Squares[newX, newY] is SeperationSquare)
                       {
                           continue;
                       }*/
-                    if (!(Squares[newX, newY] is RoadSquare || Squares[newX, newY] is SeperationSquare))
+                    if (!(Squares[newX, newY] is SeperationSquare) && !SquaresChecked.Contains((newX, newY)))
                     {
                         RoadType neighborType = FindRoadType(newX, newY);
                         Squares[newX, newY] = new RoadSquare(newX * Size, newY * Size, neighborType);
-                        
-                        UpdateNeighbors(newX, newY);
+                        SquaresChecked.Remove((newX, newY));
+                        //UpdateNeighbors(newX, newY);
                     }
                 }
             }
 
         }
 
-        private void UpdateNeighbors(int x, int y)
+        public void UpdateNeighbors(int x, int y)
         {
 
             foreach (Point neigh in directions)
@@ -216,10 +272,12 @@ namespace BootlegSimCity
 
                 if (newX >= 0 && newX < SquaresInRow && newY >= 0 && newY < NumOfLines)
                 {
-                    if (Squares[newX, newY] is SeperationSquare)
+                    if (Squares[newX, newY] is SeperationSquare && !SquaresChecked.Contains((newX,newY)))
                     {
                         RoadType neighborType = FindRoadType(newX, newY);
+                        SquaresChecked.Add((newX, newY));
                         UpdateRoads(newX, newY, neighborType);
+                        
                     }
                 }
             }
