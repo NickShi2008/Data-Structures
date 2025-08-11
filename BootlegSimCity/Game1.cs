@@ -206,11 +206,11 @@ namespace BootlegSimCity
             {
                 for (int j = 0; j < grid.Squares.GetLength(1); j++)
                 {
-                    if (grid.Squares[i, j] is HouseSquare house && grid.Squares[i, j] != stored)
+                    if (grid.Squares[i, j] is HouseSquare house)
                     {
                         foreach (Vertex<Point> ver in graph.Vertices)
                         {
-                            if (ver.Value.X == i && ver.Value.Y == j)
+                            if (ver.Value.X == i && ver.Value.Y == j && ver != stored)
                             {
                                 return ver;
                             }
