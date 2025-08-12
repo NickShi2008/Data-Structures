@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -9,17 +11,18 @@ namespace Pathfinding
 {
     public class Graph<T>
     {
-        public List<Vertex<T>> Vertices { get; set; }
-        public List<Edge<T>> Edges { get; set; }
+        public HashSet<Vertex<T>> Vertices { get; set; }
+        public HashSet<Edge<T>> Edges { get; set; }
 
         public int VertexCount => Vertices.Count;
         public Graph()
         {
-            Vertices = new List<Vertex<T>>();
+            Vertices = new HashSet<Vertex<T>>();
 
-            Edges = new List<Edge<T>>();
+            Edges = new HashSet<Edge<T>>();
         }
-
+        
+        
         public (List<Vertex<T>>, float cost) ASTAR(Vertex<T> start, Vertex<T> end,
             Func<Vertex<T>, Vertex<T>, float> heuristic)
         {
@@ -109,7 +112,14 @@ namespace Pathfinding
 
         public bool AddEdge(Vertex<T> a, Vertex<T> b, float distance)
         {
-            if (SearchVertex(a))
+            if(a == null || b == null)
+            {
+                throw new ArgumentNullException("Vertices cannot be null");
+            }
+
+            
+
+            if (SearchVertex(a) && GetEdge(a,b) == null)
             {
                 Edge<T> AConnector = new Edge<T>(a, b, distance);
                 Edges.Add(AConnector);
@@ -123,7 +133,7 @@ namespace Pathfinding
 
         public bool RemoveEdge(Vertex<T> a, Vertex<T> b)
         {
-            if (SearchVertex(a) && SearchVertex(b) && a.HasEdge(b) && b.HasEdge(a))
+            if (SearchVertex(a) && SearchVertex(b) && (a.HasEdge(b) || b.HasEdge(a)))
             {
                 a.Neighbors.Remove(a.FindFirstEdge(b));
                 b.Neighbors.Remove(b.FindFirstEdge(a));
@@ -132,23 +142,27 @@ namespace Pathfinding
             return false;
         }
 
-        public Vertex<T> Search(T vertex)
+        public void RemoveVertexAndEdges(Vertex<T> a)
         {
-            int count = -1;
-            for (int i = 0; i < Vertices.Count; i++)
+            foreach(var edge in Edges)
             {
-                if (Vertices[i].Value.Equals(vertex))
-                {
-                    count = i;
-                    break;
-                }
+                if(edge.StartingPoint.Equals(a))
+                    RemoveEdge(a, edge.EndingPoint);
+                else if(edge.EndingPoint.Equals(a))
+                    RemoveEdge(edge.StartingPoint, a);
             }
+            RemoveVertex(a);
+        }
 
-            if (count == -1)
+        public Vertex<T>? Search(T value)
+        {
+            if(Vertices.Count == 0 || value == null)
             {
                 return null;
             }
-            return Vertices[count];
+      
+            return Vertices.Contains(new Vertex<T>(value), Vertex<T>.ValueComparer) 
+                ? Vertices.FirstOrDefault(x => (x.Value.Equals(value))) : null;
         }
 
         public Edge<T> GetEdge(Vertex<T> a, Vertex<T> b)

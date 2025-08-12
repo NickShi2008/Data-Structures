@@ -9,7 +9,7 @@
         public Edge(Vertex<T> startingPoint, Vertex<T> endingPoint, float distance)
         {
             StartingPoint = startingPoint;
-            endingPoint = endingPoint;
+            EndingPoint = endingPoint;
             Distance = distance;
         }
     }

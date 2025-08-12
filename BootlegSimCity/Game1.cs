@@ -50,7 +50,7 @@ namespace BootlegSimCity
             double screenWidth = graphics.PreferredBackBufferWidth;
             double screenHeight = graphics.PreferredBackBufferHeight;
             selectScreen = new SelectScreen((int) (SCREENSIZE));
-
+            SquareDistance = 1;
             graph = new Graph<Point>();
             grid = new Grid<Point>(40, (int) (SCREENSIZE), (int) (SCREENSIZE));
             spriteFont = Content.Load<SpriteFont>("Ubuntu32");
@@ -69,7 +69,7 @@ namespace BootlegSimCity
                 ConnectGrid();
             }
 
-            for(int car = 0; car < grid.Cars.Count; car++)
+            for (int car = 0; car < grid.Cars.Count; car++)
             {
                 if (grid.Cars[car].Path.Count <= 0)
                 {
@@ -79,15 +79,16 @@ namespace BootlegSimCity
                     if (houseOne != null && houseTwo != null)
                     {
                         tracker = graph.ASTAR(houseOne, houseTwo, Manhattan);
-                        for(int i = 0; i < tracker.Item1.Count; i++)
+                        for (int i = 0; i < tracker.Item1.Count - 1; i++)
                         {
                             grid.Cars[car].Path.Enqueue(tracker.Item1[i], i);
                         }
                     }
                 }
             }
-           
-           
+
+
+
             AnimateCars(gameTime);
 
             MouseState ms = Mouse.GetState();
@@ -138,16 +139,22 @@ namespace BootlegSimCity
 
         public void ConnectGrid()
         {
-            if (graph.VertexCount > 0)
-            {
-                graph.Vertices.Clear();
-            }
             for (int i = 0; i < grid.Squares.GetLength(0); i++)
             {
                 for (int j = 0; j < grid.Squares.GetLength(1); j++)
                 {
                     var vertex = new Vertex<Point>(new Point(i, j));
 
+                    if(graph.Search(vertex.Value) != null)
+                    {
+                        if (grid.Squares[vertex.Value.X, vertex.Value.Y] is not RoadSquare 
+                            || grid.Squares[vertex.Value.X, vertex.Value.Y] is not HouseSquare)
+                        {
+                            graph.RemoveVertexAndEdges(vertex);
+                        }
+                        continue; 
+                    }
+                    
                     if (grid.Squares[i, j] is RoadSquare)
                     {
                         graph.AddVertex(vertex);
@@ -156,6 +163,14 @@ namespace BootlegSimCity
                     else if (grid.Squares[i, j] is HouseSquare)
                     {
                         graph.AddVertex(vertex);
+                        foreach (Point dir in grid.directions)
+                        {
+                            Point newPoint = vertex.Value + dir;
+                            if (grid.Squares[newPoint.X, newPoint.Y] is RoadSquare roadSquare)
+                            {
+                                graph.AddEdge(vertex, graph.Search(newPoint), SquareDistance);
+                            }
+                        }
                     }
                 }
             }
@@ -293,7 +308,7 @@ namespace BootlegSimCity
         {
             int x = square.Location.X / grid.Size;
             int y = square.Location.Y / grid.Size; 
-            Vertex<Point> a = new Vertex<Point>(square.Location);
+            Vertex<Point> a = new Vertex<Point>(new Point(x,y));
             Vertex<Point> b;
 
             switch (square.roadType)
@@ -302,11 +317,11 @@ namespace BootlegSimCity
                     
                     if (grid.Squares[x - 1, y] is SeperationSquare)
                     {
-                        b = new Vertex<Point> (grid.Squares[x, y - 1].Location);
+                        b = new Vertex<Point>(new Point(x, y - 1));
                     }
                     else if(grid.Squares[x + 1, y] is SeperationSquare )
                     {
-                        b = new Vertex<Point>(grid.Squares[x, y + 1].Location);
+                        b = new Vertex<Point>(new Point(x, y + 1));
                     }
                     else
                     {
@@ -318,60 +333,60 @@ namespace BootlegSimCity
                 case RoadType.Horizontal:
                     if (grid.Squares[x, y - 1] is SeperationSquare)
                     {
-                        b = new Vertex<Point>(grid.Squares[x + 1, y].Location);
+                        b = new Vertex<Point>(new Point(x + 1, y));
                     }
                     else if (grid.Squares[x,y + 1] is SeperationSquare)
                     {
-                        b = new Vertex<Point>(grid.Squares[x - 1, y + 1].Location);
+                        b = new Vertex<Point>(new Point(x - 1, y + 1));
                     }
                     else
                     {
                         b = null;
                         throw new NullReferenceException();
                     }
-                    graph.AddEdge(a, b, SquareDistance);
+                    graph.AddEdge(a, graph.Search(b.Value), SquareDistance);
                     break;
                 case RoadType.TopCornerLeft:
-                    b = new Vertex<Point>(grid.Squares[x, y + 1].Location);
-                    graph.AddEdge(a, b, SquareDistance);
+                    b = new Vertex<Point>(new Point(x, y + 1));
+                    graph.AddEdge(a, graph.Search(b.Value), SquareDistance);
                     break;
                 case RoadType.TopCornerRight:
-                    b = new Vertex<Point>(grid.Squares[x - 1, y].Location);
-                    graph.AddEdge(a, b, SquareDistance);
+                    b = new Vertex<Point>(new Point(x - 1, y));
+                    graph.AddEdge(a, graph.Search(b.Value), SquareDistance);
                     break;
                 case RoadType.BottomCornerLeft:
-                    b = new Vertex<Point>(grid.Squares[x + 1, y].Location);
-                    graph.AddEdge(a, b, SquareDistance);
+                    b = new Vertex<Point>(new Point(x + 1, y));
+                    graph.AddEdge(a, graph.Search(b.Value), SquareDistance);
                     break;
                 case RoadType.BottomCornerRight:
-                    b = new Vertex<Point>(grid.Squares[x, y - 1].Location);
-                    graph.AddEdge(a, b, SquareDistance);
+                    b = new Vertex<Point>(new Point(x, y - 1));
+                    graph.AddEdge(a, graph.Search(b.Value), SquareDistance);
                     break;
                 case RoadType.UpJunction:
-                    b = new Vertex<Point>(grid.Squares[x, y + 1].Location);
-                    graph.AddEdge(a, b, SquareDistance);
+                    b = new Vertex<Point>(new Point(x, y + 1));
+                    graph.AddEdge(a, graph.Search(b.Value), SquareDistance);
                     break;
                 case RoadType.DownJunction:
-                    b = new Vertex<Point>(grid.Squares[x, y - 1].Location);
-                    graph.AddEdge(a, b, SquareDistance);
+                    b = new Vertex<Point>(new Point(x, y - 1));
+                    graph.AddEdge(a, graph.Search(b.Value), SquareDistance);
                     break;
                 case RoadType.RightJunction:
-                    b = new Vertex<Point>(grid.Squares[x + 1, y].Location);
-                    graph.AddEdge(a, b, SquareDistance);
+                    b = new Vertex<Point>(new Point(x + 1, y));
+                    graph.AddEdge(a, graph.Search(b.Value), SquareDistance);
                     break;
                 case RoadType.LeftJunction:
-                    b = new Vertex<Point>(grid.Squares[x - 1, y].Location);
-                    graph.AddEdge(a, b, SquareDistance);
+                    b = new Vertex<Point>(new Point(x - 1, y));
+                    graph.AddEdge(a, graph.Search(b.Value), SquareDistance);
                     break;
                 case RoadType.CrossSection:
-                    b = new Vertex<Point>(grid.Squares[x - 1, y].Location);
-                    graph.AddEdge(a, b, SquareDistance);
-                    Vertex<Point> c = new Vertex<Point>(grid.Squares[x + 1, y].Location);
-                    graph.AddEdge(a, c, SquareDistance);
-                    break; ;
+                    b = new Vertex<Point>(new Point(x - 1, y));
+                    graph.AddEdge(a, graph.Search(b.Value), SquareDistance);
+                    Vertex<Point> c = new Vertex<Point>(new Point(x + 1, y));
+                    graph.AddEdge(a, graph.Search(c.Value), SquareDistance);
+                    break;
 
             }
-
+            ;
         }
     }
 }
