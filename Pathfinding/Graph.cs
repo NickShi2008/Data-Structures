@@ -11,13 +11,13 @@ namespace Pathfinding
 {
     public class Graph<T>
     {
-        public HashSet<Vertex<T>> Vertices { get; set; }
+        public Dictionary<T, Vertex<T>> Vertices { get; set; }
         public HashSet<Edge<T>> Edges { get; set; }
 
         public int VertexCount => Vertices.Count;
         public Graph()
         {
-            Vertices = new HashSet<Vertex<T>>();
+            Vertices = new Dictionary<T,Vertex<T>>();
 
             Edges = new HashSet<Edge<T>>();
         }
@@ -33,7 +33,7 @@ namespace Pathfinding
 
             foreach (var v in Vertices)
             {
-                totalDistances.Add(v, float.PositiveInfinity);
+                totalDistances.Add(v.Value, float.PositiveInfinity);
             }
 
             totalDistances[start] = 0;
@@ -81,50 +81,64 @@ namespace Pathfinding
             return (reversePath.ToList(), cost);
         }
 
-        public void AddVertex(Vertex<T> vertex)
+        public void AddVertex(T value)
         {
-            if (!SearchVertex(vertex) && vertex.NeighborCount == 0)
+            if (!Vertices.ContainsKey(value))
             {
-                Vertices.Add(vertex);
+                Vertices.Add(value, new Vertex<T>(value));
             }
         }
 
-        public bool RemoveVertex(Vertex<T> vertex)
+        public bool RemoveVertex(T value)
         {
-            if (Vertices.Contains(vertex))
+            
+            if (Vertices.ContainsKey(value))
             {
+                Vertex<T> vertex = Vertices[value];
                 foreach (Edge<T> edges in vertex.Neighbors)
                 {
                     edges.EndingPoint.Neighbors.Remove(edges.EndingPoint.FindFirstEdge(vertex));
                     vertex.Neighbors.Remove(vertex.FindFirstEdge(edges.EndingPoint));
                 }
-                Vertices.Remove(vertex);
+                Vertices.Remove(value);
                 return true;
             }
             return false;
         }
 
-        private bool SearchVertex(Vertex<T> vertex)
+       /*private bool SearchVertex(Vertex<T> vertex)
         {
-            bool check = Vertices.Contains(vertex);
-            return vertex != null && Vertices.Contains(vertex);
-        }
+            return vertex != null && Vertices.Contains(vertex, Vertex<T>.ValueComparer);
+        }*/
 
-        public bool AddEdge(Vertex<T> a, Vertex<T> b, float distance)
+        public bool AddEdge(T aValue, T bValue, float distance)
         {
-            if(a == null || b == null)
+            Vertex<T> a = null;
+            Vertex<T> b = null;
+            if (Vertices.ContainsKey(aValue) && Vertices.ContainsKey(bValue))
+            {
+                a = Vertices[aValue];
+                b = Vertices[bValue];
+            }
+            else
+            {
+                throw new ArgumentException("One or both vertices do not exist in the graph.");
+            }
+
+
+            if (a == null || b == null)
             {
                 throw new ArgumentNullException("Vertices cannot be null");
             }
 
             
 
-            if (SearchVertex(a) && GetEdge(a,b) == null)
+            if (GetEdge(a,b) == null && GetEdge(b,a) == null)
             {
                 Edge<T> AConnector = new Edge<T>(a, b, distance);
                 Edges.Add(AConnector);
                 if (!a.Neighbors.Contains(AConnector))
-                    a.Neighbors.Add(AConnector);
+                   a.Neighbors.Add(AConnector);
 
                 return true;
             }
@@ -133,41 +147,45 @@ namespace Pathfinding
 
         public bool RemoveEdge(Vertex<T> a, Vertex<T> b)
         {
-            if (SearchVertex(a) && SearchVertex(b) && (a.HasEdge(b) || b.HasEdge(a)))
+            if (a != null && b != null)
             {
-                a.Neighbors.Remove(a.FindFirstEdge(b));
-                b.Neighbors.Remove(b.FindFirstEdge(a));
+                if(a.HasEdge(b))
+                    a.Neighbors.Remove(a.FindFirstEdge(b));
+                if(b.HasEdge(a))
+                    b.Neighbors.Remove(b.FindFirstEdge(a));
                 return true;
             }
             return false;
         }
 
-        public void RemoveVertexAndEdges(Vertex<T> a)
+        public void RemoveVertexAndEdges(T aVal)
         {
-            foreach(var edge in Edges)
+            Vertex<T> a = Vertices[aVal];
+            foreach (var edge in Edges)
             {
                 if(edge.StartingPoint.Equals(a))
                     RemoveEdge(a, edge.EndingPoint);
                 else if(edge.EndingPoint.Equals(a))
                     RemoveEdge(edge.StartingPoint, a);
             }
-            RemoveVertex(a);
+            RemoveVertex(a.Value);
         }
 
-        public Vertex<T>? Search(T value)
+      /*  public Vertex<T>? Search(T value)
         {
             if(Vertices.Count == 0 || value == null)
             {
                 return null;
             }
       
-            return Vertices.Contains(new Vertex<T>(value), Vertex<T>.ValueComparer) 
-                ? Vertices.FirstOrDefault(x => (x.Value.Equals(value))) : null;
-        }
+            return Vertices.ContainsKey(value) ? Vertices[value] : null;
+        }*/
 
         public Edge<T> GetEdge(Vertex<T> a, Vertex<T> b)
         {
-            if (a != null && b != null && a.HasEdge(b) && b.HasEdge(a))
+            
+            if (a != null && b != null 
+                && Vertices[a.Value].HasEdge(b))
             {
                 return a.FindFirstEdge(b);
             }

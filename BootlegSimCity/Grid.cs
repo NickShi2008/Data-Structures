@@ -190,7 +190,7 @@ namespace BootlegSimCity
                             int newX = placePoint.X + neigh.X;
                             int newY = placePoint.Y + neigh.Y;
 
-                            if (Squares[newX,newY] is RoadSquare)
+                            if (IsInBounds(new Point(newX, newY), new RoadSquare(newX, newY)) && Squares[newX,newY] is RoadSquare)
                             {
                                 Squares[placePoint.X, placePoint.Y] = GetSquare[square.GetType()].Invoke(placePoint.X * Size, placePoint.Y * Size);
                             }
@@ -227,7 +227,7 @@ namespace BootlegSimCity
         {
 
             bool borderCheck = point.X >= 0 && point.X < SquaresInRow && point.Y >= 0 && point.Y < NumOfLines;
-            if (square is SeperationSquare || square is HouseSquare)
+            if (square is SeperationSquare)
             {
                 borderCheck = point.X >= 1 && point.X < SquaresInRow - 1 && point.Y >= 1 && point.Y < NumOfLines - 1;
             }

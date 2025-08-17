@@ -98,8 +98,6 @@ namespace BootlegSimCity
     public class CarSquare : ISquare
     {
         public Point Location { get; set; }
-
-        public Point NextSquare { get; set; }
         public Color Hue { get; set; }
 
         private int Center = 4;
@@ -117,10 +115,5 @@ namespace BootlegSimCity
             sb.FillRectangle(new Rectangle(Location, size), Hue);
         }
 
-        public void DrawTransparent(SpriteBatch sb, Point size)
-        {
-            Color adjustedColor = new Color(Hue.R, Hue.G, Hue.B, Hue.A - 100);
-            sb.FillRectangle(new Rectangle(Location, size), adjustedColor);
-        }
     }
 }
