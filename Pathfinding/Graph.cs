@@ -122,18 +122,19 @@ namespace Pathfinding
             }
             else
             {
-                throw new ArgumentException("One or both vertices do not exist in the graph.");
+                //throw new ArgumentException("One or both vertices do not exist in the graph.");
             }
 
 
             if (a == null || b == null)
             {
-                throw new ArgumentNullException("Vertices cannot be null");
+                //throw new ArgumentNullException("Vertices cannot be null");
+                return false;
             }
 
             
 
-            if (GetEdge(a,b) == null && GetEdge(b,a) == null)
+            if (GetEdge(a,b) == null)
             {
                 Edge<T> AConnector = new Edge<T>(a, b, distance);
                 Edges.Add(AConnector);

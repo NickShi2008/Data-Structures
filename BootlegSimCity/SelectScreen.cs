@@ -17,7 +17,7 @@ namespace BootlegSimCity
         int boxSize;
         int selectedIndex = 1;
         int screenHeight;
-        
+        public bool hasErased = true;
         List<ISquare> drawSquares;
         HashSet<Rectangle> squareBoxes;
         ISquare seperationSquare;
@@ -32,7 +32,9 @@ namespace BootlegSimCity
                 new EmptySquare(0, 0),
                 new RoadSquare(0, 0),
                 new HouseSquare(0, 0),
-                new CarSquare(0, 0),
+                new RedSquare(0, 0),
+                new WaterSquare(0, 0),
+                new GraySquare(0, 0)
             };
             seperationSquare = new SeperationSquare(0, 0);
             squareBoxes = new HashSet<Rectangle>();
@@ -46,7 +48,7 @@ namespace BootlegSimCity
             int middle = start.X + (graphics.PreferredBackBufferWidth - start.X) / 2 - boxSize / 2;
             for (int i = 0; i < drawSquares.Count; i++)
             {
-                Point drawLocation = new Point(middle, 200 + i * (boxSize + boxSpacing));
+                Point drawLocation = new Point(middle,  i * (boxSize + boxSpacing));
                 drawSquares[i].Location = drawLocation;
                 drawSquares[i].Draw(sb, new Point(boxSize, boxSize));
                 Color outlineColor = Color.Black;
@@ -59,7 +61,15 @@ namespace BootlegSimCity
 
 
                 string squareLabel = $"{drawSquares[i].GetType()}";
-                squareLabel = squareLabel[15..^6];
+                if (drawSquares[i] is RedSquare)
+                {
+                    squareLabel = $"{new CarSquare(0, 0)}";
+                }
+                else if (drawSquares[i] is GraySquare)
+                {
+                    squareLabel = $"{new BoatSquare(0, 0)}";
+                }
+                    squareLabel = squareLabel[15..^6];
                 
                 Vector2 textSize = sf.MeasureString(squareLabel);
                 Vector2 textPosition = new Vector2(
@@ -73,13 +83,22 @@ namespace BootlegSimCity
         public ISquare GetCurrentSquare()
         {
             if (selectedIndex == 1) return seperationSquare;
+            if (drawSquares[selectedIndex] is RedSquare)
+            {
+                return new CarSquare(0, 0);
+            }
+
+            if (drawSquares[selectedIndex] is EmptySquare)
+            {
+                hasErased = false;
+            }
+
             return drawSquares[selectedIndex];
         }
 
         public void SetSelectedIndex(int index)
         {
-            if (index >= 0 && index < drawSquares.Count)
-                selectedIndex = index;
+            selectedIndex = index;
         }
 
         public void FindSelectedSquare(Point point)
@@ -97,7 +116,7 @@ namespace BootlegSimCity
                 count++;
 
             }
-            
+
         }
     }
 }

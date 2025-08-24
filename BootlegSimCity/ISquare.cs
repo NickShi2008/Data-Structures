@@ -61,6 +61,33 @@ namespace BootlegSimCity
         }
     }
 
+    public class WaterSquare : ISquare
+    {
+        public Point Location { get; set; }
+        public Color Hue { get; set; }
+        public RoadType roadType { get; set; }
+
+        public WaterSquare(int x, int y)
+        {
+            Location = new Point(x, y);
+            Hue = Color.SkyBlue;
+            roadType = RoadType.Horizontal;
+        }
+
+        public WaterSquare(int x, int y, RoadType roadType)
+        {
+            Location = new Point(x, y);
+            Hue = Color.Black;
+            this.roadType = roadType;
+        }
+
+        public void Draw(SpriteBatch sb, Point size)
+        {
+            sb.FillRectangle(new Rectangle(Location, size), Hue);
+
+        }
+    }
+
     public class SeperationSquare : ISquare
     {
         public Point Location { get; set; }
@@ -106,8 +133,71 @@ namespace BootlegSimCity
 
         public CarSquare(int x, int y)
         {
-            Location = new Point(x + Center, y + Center);
+            Location = new Point(x, y);
             Hue = Color.Red;
+        }
+
+        public void Draw(SpriteBatch sb, Point size)
+        {
+            sb.FillRectangle(new Rectangle(Location + new Point(Center,Center), size), Hue);
+        }
+
+    }
+
+    public class BoatSquare : ISquare
+    {
+        public Point Location { get; set; }
+        public Color Hue { get; set; }
+
+        private int Center = 4;
+
+        public PriorityQueue<Vertex<Point>, int> Path { get; set; } = new PriorityQueue<Vertex<Point>, int>();
+
+        public BoatSquare(int x, int y)
+        {
+            Location = new Point(x, y);
+            Hue = Color.DarkSlateGray;
+        }
+
+        public void Draw(SpriteBatch sb, Point size)
+        {
+            sb.FillRectangle(new Rectangle(Location + new Point(Center, Center), size), Hue);
+        }
+
+    }
+
+    public class RedSquare : ISquare
+    {
+        public Point Location { get; set; }
+        public Color Hue { get; set; }
+
+        public PriorityQueue<Vertex<Point>, int> Path { get; set; } = new PriorityQueue<Vertex<Point>, int>();
+
+        public RedSquare(int x, int y)
+        {
+            Location = new Point(x, y);
+            Hue = Color.Red;
+        }
+
+        public void Draw(SpriteBatch sb, Point size)
+        {
+            sb.FillRectangle(new Rectangle(Location, size), Hue);
+        }
+
+    }
+
+    public class GraySquare : ISquare
+    {
+        public Point Location { get; set; }
+        public Color Hue { get; set; }
+
+
+        public PriorityQueue<Vertex<Point>, int> Path { get; set; } = new PriorityQueue<Vertex<Point>, int>();
+
+        public GraySquare(int x, int y)
+        {
+            Location = new Point(x, y);
+            Hue = Color.DarkSlateGray;
         }
 
         public void Draw(SpriteBatch sb, Point size)
