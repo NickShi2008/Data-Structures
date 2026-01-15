@@ -46,7 +46,7 @@ namespace PathFindingVis
         }
         public void Draw(SpriteBatch sb, Point size)
         {
-            sb.FillRectangle(new Rectangle(location, size), Color.MediumSlateBlue);
+            sb.FillRectangle(new Rectangle(location, size), Color.MediumTurquoise);
         }
     }
 
@@ -106,7 +106,7 @@ namespace PathFindingVis
         }
         public void Draw(SpriteBatch sb,  Point size)
         {
-            sb.FillRectangle(new Rectangle(location, size), Color.MonoGameOrange);
+            sb.FillRectangle(new Rectangle(location, size), Color.MediumSeaGreen);
         }
     }
 

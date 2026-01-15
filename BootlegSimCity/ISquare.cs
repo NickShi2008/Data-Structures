@@ -28,6 +28,7 @@ namespace BootlegSimCity
             Location = new Point(x, y);
             Hue = Color.AntiqueWhite;
         }
+
         public void Draw(SpriteBatch sb, Point size)
         {
             sb.FillRectangle(new Rectangle(Location, size), Hue);
@@ -57,7 +58,6 @@ namespace BootlegSimCity
         public void Draw(SpriteBatch sb, Point size)
         {
             sb.FillRectangle(new Rectangle(Location, size), Hue);
-
         }
     }
 
@@ -77,14 +77,13 @@ namespace BootlegSimCity
         public WaterSquare(int x, int y, RoadType roadType)
         {
             Location = new Point(x, y);
-            Hue = Color.Black;
+            Hue = Color.SkyBlue;
             this.roadType = roadType;
         }
 
         public void Draw(SpriteBatch sb, Point size)
         {
             sb.FillRectangle(new Rectangle(Location, size), Hue);
-
         }
     }
 
@@ -108,8 +107,8 @@ namespace BootlegSimCity
     public class HouseSquare : ISquare
     {
         public Point Location { get; set; }
-
         public Color Hue { get; set; }
+
         public HouseSquare(int x, int y, bool isPreview = false)
         {
             Location = new Point(x, y);
@@ -126,8 +125,8 @@ namespace BootlegSimCity
     {
         public Point Location { get; set; }
         public Color Hue { get; set; }
-
         private int Center = 4;
+        public Point LastDirection { get; set; } = new Point(0, 0);
 
         public PriorityQueue<Vertex<Point>, int> Path { get; set; } = new PriorityQueue<Vertex<Point>, int>();
 
@@ -139,16 +138,32 @@ namespace BootlegSimCity
 
         public void Draw(SpriteBatch sb, Point size)
         {
-            sb.FillRectangle(new Rectangle(Location + new Point(Center,Center), size), Hue);
-        }
+            // Calculate offset based on direction to simulate right-side driving
+            Point offset = new Point(Center, Center);
 
+            // If moving horizontally, offset vertically (stay on right side)
+            if (LastDirection.X != 0)
+            {
+                // Moving right: offset down (right side in top-down view)
+                // Moving left: offset up (right side in top-down view)
+                offset.Y = LastDirection.X > 0 ? Center + 3 : Center - 3;
+            }
+            // If moving vertically, offset horizontally
+            else if (LastDirection.Y != 0)
+            {
+                // Moving down: offset right
+                // Moving up: offset left
+                offset.X = LastDirection.Y > 0 ? Center + 3 : Center - 3;
+            }
+
+            sb.FillRectangle(new Rectangle(Location + offset, size), Hue);
+        }
     }
 
     public class BoatSquare : ISquare
     {
         public Point Location { get; set; }
         public Color Hue { get; set; }
-
         private int Center = 4;
 
         public PriorityQueue<Vertex<Point>, int> Path { get; set; } = new PriorityQueue<Vertex<Point>, int>();
@@ -163,7 +178,6 @@ namespace BootlegSimCity
         {
             sb.FillRectangle(new Rectangle(Location + new Point(Center, Center), size), Hue);
         }
-
     }
 
     public class RedSquare : ISquare
@@ -183,14 +197,12 @@ namespace BootlegSimCity
         {
             sb.FillRectangle(new Rectangle(Location, size), Hue);
         }
-
     }
 
     public class GraySquare : ISquare
     {
         public Point Location { get; set; }
         public Color Hue { get; set; }
-
 
         public PriorityQueue<Vertex<Point>, int> Path { get; set; } = new PriorityQueue<Vertex<Point>, int>();
 
@@ -204,6 +216,5 @@ namespace BootlegSimCity
         {
             sb.FillRectangle(new Rectangle(Location, size), Hue);
         }
-
     }
 }

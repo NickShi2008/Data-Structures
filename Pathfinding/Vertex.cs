@@ -14,8 +14,8 @@ namespace Pathfinding
         public int NeighborCount => Neighbors.Count;
 
         public static EqualityComparer<Vertex<T>> ValueComparer = EqualityComparer<Vertex<T>>.Create(
-            (x, y) => { 
-                return x.Value.Equals(y.Value); 
+            (x, y) => {
+                return x.Value.Equals(y.Value);
             });
 
         public Vertex(T value)
@@ -36,7 +36,6 @@ namespace Pathfinding
                 return new Edge<T>(a, a, 0);
             }
             return Neighbors.Where(x => x.EndingPoint.Equals(a)).First();
-
         }
     }
 }

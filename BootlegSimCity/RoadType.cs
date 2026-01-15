@@ -21,6 +21,5 @@ namespace BootlegSimCity
         RightJunction,
         LeftJunction,
         CrossSection,
-       // Circle,
     }
 }

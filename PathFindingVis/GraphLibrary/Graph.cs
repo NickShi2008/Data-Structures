@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace GraphLibrary
 {
-    public class Graph<T> 
+    public class Graph<T>
     {
         //private Grid<T> GridVis { get; set; }
         public List<Vertex<T>> Vertices { get; set; }
@@ -16,17 +16,17 @@ namespace GraphLibrary
         public int VertexCount => Vertices.Count;
 
 
-        
+
         public Graph()
         {
 
             Vertices = new List<Vertex<T>>();
-            
+
             Edges = new List<Edge<T>>();
         }
 
-        
-        public (List<Vertex<T>>, float cost) Dijkstra(Vertex<T> start, Vertex<T> end)
+
+        public (List<Vertex<T>> path, List<Vertex<T>> visited, float cost) Dijkstra(Vertex<T> start, Vertex<T> end)
         {
             //Init
             Dictionary<Vertex<T>, float> totalDistances = new Dictionary<Vertex<T>, float>();
@@ -71,10 +71,11 @@ namespace GraphLibrary
             }
             //traces backwards to the beginning
 
-            return FindPath(start, end, map);
+            var pathResult = FindPath(start, end, map);
+            return (pathResult.path, visitedVertices, pathResult.cost);
         }
 
-        public (List<Vertex<T>>, float cost) ASTAR(Vertex<T> start, Vertex<T> end, 
+        public (List<Vertex<T>> path, List<Vertex<T>> visited, float cost) ASTAR(Vertex<T> start, Vertex<T> end,
             Func<Vertex<T>, Vertex<T>, float> heuristic)
         {
             Dictionary<Vertex<T>, float> totalDistances = new Dictionary<Vertex<T>, float>();
@@ -89,7 +90,8 @@ namespace GraphLibrary
 
             totalDistances[start] = 0;
 
-            queuedDistances.Enqueue(start, 0);
+            //queuedDistances.Enqueue(start, 0);
+            queuedDistances.Enqueue(start, heuristic(start, end));
 
             while (queuedDistances.Count > 0)
             {
@@ -98,25 +100,44 @@ namespace GraphLibrary
                 if (visitedVertices.Contains(vertex))
                     continue;
                 visitedVertices.Add(vertex);
-                
+
                 foreach (var neigh in vertex.Neighbors)
-                { 
-                    float finalDistance = totalDistances[vertex] + neigh.Distance + heuristic(neigh.EndingPoint, end);
+                {
+                    /*float finalDistance = totalDistances[vertex] + neigh.Distance + heuristic(neigh.EndingPoint, end);
 
                     if (finalDistance < totalDistances[neigh.EndingPoint])
                     {
                         totalDistances[neigh.EndingPoint] = finalDistance;
-                        map[neigh.EndingPoint] = (neigh.StartingPoint, neigh.Distance); 
+                        map[neigh.EndingPoint] = (neigh.StartingPoint, neigh.Distance);
                         queuedDistances.Enqueue(neigh.EndingPoint, finalDistance);
+                    }*/
+                    float finalDistance = totalDistances[vertex] + neigh.Distance;
+
+                    if (finalDistance < totalDistances[neigh.EndingPoint])
+                    {
+                        totalDistances[neigh.EndingPoint] = finalDistance;
+                        map[neigh.EndingPoint] = (neigh.StartingPoint, neigh.Distance);
+                        float fScore = finalDistance + heuristic(neigh.EndingPoint, end);
+                        queuedDistances.Enqueue(neigh.EndingPoint, fScore);
                     }
+                        /*float tentativeGScore = gScore[vertex] + neigh.Distance;
+
+                        if (tentativeGScore < gScore[neigh.EndingPoint])
+                        {
+                            gScore[neigh.EndingPoint] = tentativeGScore;
+                            map[neigh.EndingPoint] = (neigh.StartingPoint, neigh.Distance);
+                            float fScore = tentativeGScore + heuristic(neigh.EndingPoint, end);
+                            queuedDistances.Enqueue(neigh.EndingPoint, fScore);
+                        }*/
                 }
 
             }
 
-            return FindPath(start, end, map);
+            var pathResult = FindPath(start, end, map);
+            return (pathResult.path, visitedVertices, pathResult.cost);
         }
 
-       
+
         public (List<Vertex<T>> path, float cost) FindPath(Vertex<T> start, Vertex<T> end, Dictionary<Vertex<T>, (Vertex<T> founder, float cost)> founderMap)
         {
             Stack<Vertex<T>> reversePath = new Stack<Vertex<T>>();
@@ -131,7 +152,7 @@ namespace GraphLibrary
 
             return (reversePath.ToList(), cost);
         }
-        
+
 
         public void AddVertex(Vertex<T> vertex)
         {
@@ -164,7 +185,7 @@ namespace GraphLibrary
 
         public bool AddEdge(Vertex<T> a, Vertex<T> b, float distance)
         {
-            if (SearchVertex(a) )
+            if (SearchVertex(a))
             {
                 Edge<T> AConnector = new Edge<T>(a, b, distance);
                 Edges.Add(AConnector);
