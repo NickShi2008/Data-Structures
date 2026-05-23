@@ -13,6 +13,8 @@ namespace GradientDescentXOR
         public Neuron Next { get; }
         public double WeightUpdate { get; set; }
 
+        double previousWeight = 0;
+
         public Dendrite(Neuron previous, Neuron next, double weight)
         {
             Previous = previous;
@@ -25,9 +27,11 @@ namespace GradientDescentXOR
             return Previous.Output* Weight;
         }
 
-        public void ApplyUpdates()
+        public void ApplyUpdates(double momentum)
         {
+            WeightUpdate += momentum * previousWeight;
             Weight += WeightUpdate;
+            previousWeight = WeightUpdate;
             WeightUpdate = 0;
         }
     }

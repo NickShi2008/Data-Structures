@@ -14,6 +14,8 @@ namespace GradientDescentXOR
         public double Input { get; private set; }
         public ActivationFunction Activation { get; set; }
 
+        double previousBias = 0;
+
         public double Delta { get; set; }
         double biasUpdate;
 
@@ -29,30 +31,33 @@ namespace GradientDescentXOR
 
         public double Compute()
         {
-            double val = bias;
+            Input = bias;
             for(int i = 0; i < dendrites.Length; i++)
             {
-                val += dendrites[i].Compute();
+                Input += dendrites[i].Compute();
             }
-            return Activation.Function(val);
+            Output = Activation.Function(Input);
+            return Output;
         }
 
         public void Randomize(Random random, double min, double max)
         {
-            for(int i = 0; i < dendrites.Length;i ++)
+            for(int i = 0; i < dendrites.Length; i++)
             {
                 dendrites[i].Weight = random.NextDouble() * (max - min) + min;
             }
             bias = random.NextDouble() * (max - min) + min;
         }
 
-        public void ApplyUpdates()
+        public void ApplyUpdates(double momentum)
         {
+            biasUpdate += previousBias * momentum;
             bias += biasUpdate;
+            previousBias = biasUpdate;
             biasUpdate = 0;
             for(int i = 0; i< dendrites.Length; i++)
             {
-                dendrites[i].ApplyUpdates();
+                dendrites[i].ApplyUpdates(momentum);
             }
         }
 
@@ -60,11 +65,10 @@ namespace GradientDescentXOR
         {
             for(int i = 0; i < dendrites.Length; i++)
             {
-                dendrites[i].WeightUpdate += learningRate * Delta * Activation.Derivative(Input) * dendrites[i].Previous.Output;
-                biasUpdate += learningRate * Delta * Activation.Derivative(Input);
-               
-                
+                dendrites[i].WeightUpdate += learningRate * -Delta * Activation.Derivative(Input) * dendrites[i].Previous.Output;
+                dendrites[i].Previous.Delta += Delta * Activation.Derivative(Input) * dendrites[i].Weight;
             }
+            biasUpdate += learningRate * -Delta * Activation.Derivative(Input);
             Delta = 0;
         }
     }

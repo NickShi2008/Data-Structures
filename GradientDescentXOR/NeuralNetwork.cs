@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -40,11 +41,12 @@ namespace GradientDescentXOR
             {
                 layers[0].Neurons[i].Output = inputs[i];
             }
+            double[] outputs = new double[layers.Length];
             for(int i = 1; i < layers.Length; i++)
             {
-                layers[i].Compute();
+                outputs = layers[i].Compute();
             }
-            return layers[layers.Length - 1].Outputs;
+            return outputs;
         }
 
         public double GetError(double[] inputs, double[] desiredOutputs) 
@@ -55,54 +57,57 @@ namespace GradientDescentXOR
             {
                 totalError += errorFunc.Function(outputs[i], desiredOutputs[i]);
             }
-            return totalError/desiredOutputs.Length;
+            return totalError;
         }
 
-        public void ApplyUpdates()
+        public void ApplyUpdates(double momentum)
         {
             for(int i = 0; i < layers.Length; i++)
             {
-                layers[i].ApplyUpdates();
+                layers[i].ApplyUpdates(momentum);
             }
         }
 
         public void BackProp(double learningRate, double[] desiredOutputs)
         {
-            for(int i = layers.Length - 1; i > 0; i--)
+            int n = layers.Length;
+
+            for (int j = 0; j < layers[n - 1].Neurons.Length; j++)
             {
-                for (int j = 0; j < layers[i].Neurons.Length; j++)
-                {
-                    if (i == layers.Length - 1)
-                    {
-                        layers[i].Neurons[j].Delta = errorFunc.Derivative(layers[i].Neurons[j].Output, desiredOutputs[j]);
-                    }
-                    else
-                    {
-                        double delta = 0;
-                        for (int v = 0; v < layers[i].Neurons.Length; v++)
-                        {
-                            delta += layers[i].Neurons[v].Delta;
-                        }
-                            
-                        layers[i].Neurons[j].Delta = layers[i + 1].Neurons[j].Delta
-                            * layers[i + 1].Neurons[j].Activation.Derivative(layers[i].Neurons[j].Input) * delta 
-                            ;
-                    }
-                    layers[i].Neurons[j].BackProp(learningRate);
-                        
-                }
+                //only one output for xOr
+                layers[n - 1].Neurons[j].Delta = errorFunc.Derivative(layers[n - 1].Neurons[j].Output, desiredOutputs[j]);
+            }
+            for (int i = layers.Length - 1; i >= 0; i--)
+            {
+                layers[i].BackProp(learningRate);
             }
         }
 
-        public double Train(double[][] inputs, double[][] desiredOutputs, double learningRate)
+        public double Train(double[][] inputs, double[][] desiredOutputs, double learningRate, double momentum)
         {
             double[] errorPerRow = new double[inputs.Length];
             for (int i = 0; i < inputs.Length; i++)
             {
                 errorPerRow[i] = GetError(inputs[i], desiredOutputs[i]);
                 BackProp(learningRate, desiredOutputs[i]);
-                ApplyUpdates();
             }
+            ApplyUpdates(momentum);
+            return errorPerRow.Average();
+        }
+
+        public double BatchTrain(double[][] inputs, double[][] desiredOutputs, double learningRate, double momentum, int batchSize)
+        {
+            double[] errorPerRow = new double[inputs.Length];
+            for (int i = 0; i < inputs.Length; i++)
+            {
+                errorPerRow[i] = GetError(inputs[i], desiredOutputs[i]);
+                BackProp(learningRate, desiredOutputs[i]);
+                if ((i + 1) % batchSize == 0)
+                {
+                    ApplyUpdates(momentum);
+                }
+            }
+            ApplyUpdates(momentum);
             return errorPerRow.Average();
         }
     }

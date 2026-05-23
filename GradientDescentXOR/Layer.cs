@@ -49,11 +49,11 @@ namespace GradientDescentXOR
             return Outputs;
         }
 
-        public void ApplyUpdates()
+        public void ApplyUpdates(double momentum)
         {
             for(int i = 0; i < Neurons.Length; i++)
             {
-                Neurons[i].ApplyUpdates();
+                Neurons[i].ApplyUpdates(momentum);
             }
         }
 
