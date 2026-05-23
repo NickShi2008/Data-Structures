@@ -55,7 +55,7 @@ namespace GradientDescentXOR
             bias += biasUpdate;
             previousBias = biasUpdate;
             biasUpdate = 0;
-            for(int i = 0; i< dendrites.Length; i++)
+            for(int i = 0; i < dendrites.Length; i++)
             {
                 dendrites[i].ApplyUpdates(momentum);
             }

@@ -17,7 +17,7 @@ namespace GradientDescentXOR
 
            
             ErrorFunction errorFunc = new ErrorFunction(
-                (output, target) => 0.5 * Math.Pow(output - target, 2),
+                (output, target) =>Math.Pow(output - target, 2),
                 (output, target) => output - target
             );
             
@@ -50,7 +50,7 @@ namespace GradientDescentXOR
             };
 
             neuralNetworkXOR.Randomize(new Random(), -1, 1);
-            double learningRate = 0.05;
+            double learningRate = 0.03;
             double momentum = 0.9;
             //do
             //{
@@ -84,16 +84,16 @@ namespace GradientDescentXOR
               }
             );
 
-            NeuralNetwork neuralNetworkSin = new NeuralNetwork(tanH, errorFunc, 1, 5, 1);
+            NeuralNetwork neuralNetworkSin = new NeuralNetwork(tanH, errorFunc, 1, 5,5, 1);
 
-            int sampleCount = 100;
+            int sampleCount = 10;
 
             double[][] waveInputs = new double[sampleCount][];
             double[][] sinWave = new double[sampleCount][];
 
             for (int i = 0; i < sampleCount; i++)
             {
-                double x = (i / 100.0) * Math.PI * 2;
+                double x = (i / 10.0) * Math.PI * 2;
 
                 waveInputs[i] = new double[]
                 {
@@ -105,22 +105,23 @@ namespace GradientDescentXOR
                     Math.Sin(x)
                 };
             }
-            int batchSize = 16;
+
+            int batchSize = 1;
             neuralNetworkSin.Randomize(new Random(), -1, 1);
             do
             {
                 error = neuralNetworkSin.BatchTrain(waveInputs, sinWave, learningRate, momentum, batchSize);
                 Console.WriteLine($"Error: {error}");
-            } while (error > 0.01);
+            } while (error > 0.0000001);
 
             for (int i = 0; i < 10; i++)
             {
-                double x = i * 0.5;
+                double x = (double)i /10.0;
 
                 double[] output = neuralNetworkSin.Compute(new double[] { x });
 
                 Console.WriteLine(
-                    $"x = {x:F1}  predicted = {output[0]:F4}  actual = {Math.Sin(x):F4}"
+                    $"x = {x:F1}  predicted = {output[0]:F4}  actual = {Math.Sin(x*Math.PI*2):F4}"
                 );
             }
 

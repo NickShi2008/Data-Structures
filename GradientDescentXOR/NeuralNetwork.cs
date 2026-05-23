@@ -18,7 +18,7 @@ namespace GradientDescentXOR
             layers = new Layer[neuronsPerLayer.Length];
             for (int i = 0; i < layers.Length; i++)
             {
-                if(i == 0)
+                if (i == 0)
                 {
                     layers[i] = new Layer(activation, neuronsPerLayer[i]);
                 }
@@ -28,32 +28,32 @@ namespace GradientDescentXOR
                 }
             }
         }
-        public void Randomize(Random random, double min, double max) 
+        public void Randomize(Random random, double min, double max)
         {
-            for(int i = 0; i < layers.Length; i++)
+            for (int i = 0; i < layers.Length; i++)
             {
                 layers[i].Randomize(random, min, max);
             }
         }
-        public double[] Compute(double[] inputs) 
+        public double[] Compute(double[] inputs)
         {
-            for(int i = 0; i < inputs.Length; i++)
+            for (int i = 0; i < inputs.Length; i++)
             {
                 layers[0].Neurons[i].Output = inputs[i];
             }
             double[] outputs = new double[layers.Length];
-            for(int i = 1; i < layers.Length; i++)
+            for (int i = 1; i < layers.Length; i++)
             {
                 outputs = layers[i].Compute();
             }
             return outputs;
         }
 
-        public double GetError(double[] inputs, double[] desiredOutputs) 
+        public double GetError(double[] inputs, double[] desiredOutputs)
         {
             double[] outputs = Compute(inputs);
             double totalError = 0;
-            for(int i = 0; i < outputs.Length; i++)
+            for (int i = 0; i < outputs.Length; i++)
             {
                 totalError += errorFunc.Function(outputs[i], desiredOutputs[i]);
             }
@@ -62,7 +62,7 @@ namespace GradientDescentXOR
 
         public void ApplyUpdates(double momentum)
         {
-            for(int i = 0; i < layers.Length; i++)
+            for (int i = 0; i < layers.Length; i++)
             {
                 layers[i].ApplyUpdates(momentum);
             }
@@ -102,10 +102,9 @@ namespace GradientDescentXOR
             {
                 errorPerRow[i] = GetError(inputs[i], desiredOutputs[i]);
                 BackProp(learningRate, desiredOutputs[i]);
-                if ((i + 1) % batchSize == 0)
-                {
-                    ApplyUpdates(momentum);
-                }
+
+                ApplyUpdates(momentum);
+
             }
             ApplyUpdates(momentum);
             return errorPerRow.Average();
